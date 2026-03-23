@@ -1,65 +1,113 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+@import "./docs/pair-prd.md"
 
-## Product
+## Project Overview
 
-**Pair** is a couples-only social app where the unit of identity is a couple profile, not an individual. The core mechanic is dual-consent: a connection between two couples only confirms when *both* partners in each couple have independently opted in. Either partner can veto at any stage.
+Pair is a couples-only friend-matching web app. The unit of identity is a **couple** (two linked user accounts), not an individual. All connection logic enforces dual-consent at every stage.
+
+## Tech Stack
+| Layer | Choice |
+|-------|--------|
+| Frontend | React + TypeScript + React Router v6 |
+| Backend | Node.js + Express |
+| Database | Supabase (Postgres) |
+| Auth | Supabase Auth — JWTs verified in Express middleware |
+| Real-time | Supabase Realtime (chat threads) |
+| Testing | Vitest + React Testing Library (unit/integration), Playwright (E2E) |
+| Hosting | Vercel (frontend), Render (backend) |
 
 ## Architecture
 
-This is a two-package repo (no workspace manager) with independently managed `client/` and `server/` directories. They do not share dependencies or build tooling at the root level.
+```
+/client          React + TypeScript SPA
+  /src
+    /components  Shared UI components
+    /pages       Route-level page components
+    /hooks       Custom React hooks
+    /lib         API client, Supabase client, helpers
+/server          Express API
+  /routes        REST route handlers
+  /middleware    Auth (JWT verification), error handling
+  /services      Business logic (connection state machine, token logic)
+  /db            Supabase query helpers
+/shared          Types shared between client and server
+/e2e             Playwright tests
+```
 
 - **`client/`** — React 18 SPA using Vite 8, TypeScript, and `react-router-dom` v6. Entry point: `src/main.tsx`. Deployed to Vercel.
-- **`server/`** — Express 5 REST API using TypeScript. Entry point: `src/index.ts`. Runs on port 3000. Deployed to Railway or Render.
+- **`server/`** — Express 5 REST API using TypeScript. Entry point: `src/index.ts`. Runs on port 3000. Deployed to Render.
 - **Database** — Supabase Postgres. The backend connects using the service role key (bypasses RLS). All authorization is enforced in Express route handlers — the frontend never holds the service role key.
 - **Auth** — Supabase Auth issues JWTs; Express middleware verifies them on every protected route.
 - **Real-time** — Supabase Realtime, subscribed to from the frontend directly (powers the four-person chat thread on connected couples).
 
-All commands below must be run from within the respective `client/` or `server/` directory.
+**Key architectural rules:**
+- The backend connects to Supabase using the **service role key** — RLS is bypassed; all access control is enforced in route handlers.
+- The frontend **never** holds the service role key. It only calls the Express API.
+- Supabase Realtime is subscribed to directly from the frontend (chat only).
 
-## Connection State Machine
+## Data Model (key tables)
+- `profiles` — extends `auth.users`; has `partner_id` (null until linked)
+- `tags` / `user_tags` — tags at the individual level, unioned at the couple level
+- `connection_requests` — status: `INTEREST_PENDING | INTEREST_ALIGNED | REQUEST_PENDING | CONNECTED | DECLINED`
+- `connection_request_participants` — per-user `interested` bool (4 rows per request)
+- `messages` — linked to a `connection_request` (the chat thread)
 
-Connection requests move through these states, enforced in the backend:
-
+**Connection state machine:**
 ```
-INTEREST_PENDING   → One partner of couple 1 has expressed interest; waiting for the other
-INTEREST_ALIGNED   → Both partners of couple 1 interested; request dispatched to couple 2
-REQUEST_PENDING    → Couple 2 has received the request; awaiting both partners' responses
-CONNECTED          → All four parties accepted
-DECLINED           → Any partner vetoed at stage 1 or stage 2
+INTEREST_PENDING  → one partner expressed interest; waiting on the other
+INTEREST_ALIGNED  → both partners aligned; request dispatched to couple 2
+REQUEST_PENDING   → couple 2 received request; awaiting both responses
+CONNECTED         → all four accepted
+DECLINED          → vetoed at any stage
 ```
+Transitions are enforced **only in the Express backend**, never in client code.
 
-Key rules:
-- The backend rejects creating a new request if any request already exists between two couples in any direction/status.
-- Which partner declined is never disclosed to the requesting couple.
-- If a couple dissolves (partner delinks), all their connection requests and messages are deleted.
+## Coding Conventions
+- **TypeScript strict mode** — no `any`; define shared types in `/shared`
+- **Named exports** for components and utilities; default exports for page components only
+- **Async/await** throughout — no raw `.then()` chains
+- **Error handling** — all Express routes use a central error-handling middleware; never `res.send` raw errors
+- **Tag normalization** — always lowercase + trim before insert; enforced in a shared util used by both client validation and backend
+- File naming: `PascalCase` for components, `camelCase` for hooks/utils
 
-## Data Model
+## Testing Strategy
+- **Write tests before implementation (TDD)** — red → green → refactor
+- Unit tests live alongside source files (`*.test.ts`)
+- Integration tests cover API routes with a test Supabase instance live alongside source files
+- Playwright E2E covers the critical flows: onboarding, partner linking, discovery, connection request (both stages), chat
+- Target: ≥ 80% coverage on unit + integration
+- Run all tests before every commit: `npm run test`
 
-```sql
-profiles                  -- extends Supabase auth.users
-  id, display_name, partner_id (null until linked)
+## Do's ✅
+- Enforce dual-consent in the backend service layer, not in route handlers directly
+- Check for existing connection requests (any direction, any status) before creating a new one (FR-CONN-09)
+- Normalize tags (lowercase + trim) at the service layer, not just the UI
+- Use Supabase Realtime only for chat — all other data fetches go through Express
+- Keep couple-level logic (tag union, visibility rules) in dedicated service functions
 
-tags                      -- normalized lowercase, trimmed; max 10 per user
-  id, label, is_custom
-
-user_tags                 -- join table: tags applied at individual level, unioned at couple level
-  user_id, tag_id
-
-connection_requests
-  id, status (PENDING | CONNECTED | DECLINED)
-
-connection_request_participants   -- one row per user (all 4) per request
-  request_id, user_id, interested (bool)
-
-messages                  -- scoped to a connection_request; visible to all 4 participants
-  id, request_id, sender_id, content, created_at
-```
-
-State transition rules: `PENDING → CONNECTED` when all four `interested = true`; any `interested = false` → `DECLINED`.
+## Don'ts ❌
+- Don't expose the Supabase service role key to the frontend — ever
+- Don't let the frontend transition connection states directly — always go through the Express API
+- Don't skip the duplicate-request check before inserting a new `connection_requests` row
+- Don't show which partner declined a request to the requesting couple (FR-CONN-08 / privacy requirement)
+- Don't surface incomplete couple profiles (one partner unregistered) in the discovery feed
+- Don't add map or geolocation logic — location is a plain text tag in v1
 
 ## Commands
+
+### Root (from project root)
+
+```bash
+npm run dev:client          # Start client dev server
+npm run dev:server          # Start server with live reload
+npm run format              # Format all files with Prettier
+npm run format:check        # Check formatting without writing
+npm run lint                # Lint client and server
+npm run test                # Run all tests (client + server)
+npm run test:client         # Run client tests only
+npm run test:server         # Run server tests only
+```
 
 ### Client (`cd client`)
 
@@ -67,6 +115,7 @@ State transition rules: `PENDING → CONNECTED` when all four `interested = true
 npm run dev        # Start Vite dev server with HMR
 npm run build      # Type-check + production build (tsc -b && vite build)
 npm run lint       # ESLint
+npm run preview    # Preview production build locally
 npm test           # Run all tests once (vitest run)
 ```
 
@@ -88,8 +137,10 @@ npm test -- src/App.test.tsx          # client example
 npm test -- src/index.test.ts         # server example
 ```
 
-## Testing
-
-- **Client**: Vitest with `jsdom` environment and `@testing-library/react`.
-- **Server**: Vitest only — no DOM environment. Test files live in `server/src/` alongside source files.
-- **E2E**: Playwright covers critical user flows (not yet scaffolded).
+## Key Business Rules (quick reference)
+1. A couple is "complete" only when both partners have registered **and** linked via invite token.
+2. Invite tokens are single-use and expire after 72 hours.
+3. If one partner delinks, the other's account is suspended and all shared requests/messages are deleted.
+4. Max 10 tags per user; couple profile displays up to 20 (union).
+5. Discovery feed ranks by shared tag count (descending); excludes own couple, already-connected couples, and incomplete couples.
+6. A connection request is only sent to couple 2 after **both** partners of couple 1 have set `interested = true`.

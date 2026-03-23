@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+**/node_modules
+
+# build
+build
+dist
+**/build
+**/dist
+
+# coverage
+coverage
+**/coverage
+
+# Playwright
+playwright-report
+test-results/
+
+# Vite
+.vite
+.vite.*
+client/.vite
+client/.vite.*
+
+# TypeScript
+*.tsbuildinfo
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# logs
+logs
+*.log
+**/logs
+**/*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+

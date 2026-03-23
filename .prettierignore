@@ -1,0 +1,12 @@
+out
+dist
+node_modules
+build
+coverage
+playwright-report
+test-results
+test-results-ui
+pnpm-lock.yaml
+LICENSE.md
+tsconfig.json
+tsconfig.*.json

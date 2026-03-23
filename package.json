@@ -1,0 +1,30 @@
+{
+  "name": "pair-app",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,md}\"",
+    "lint:client": "eslint --config client/eslint.config.js ./client",
+    "lint:server": "eslint --config server/eslint.config.js ./server",
+    "lint": "npm run lint:client && npm run lint:server",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "dev": "npm run dev:client",
+    "test:client": "npm run test --workspace=client",
+    "test:server": "npm run test --workspace=server",
+    "test": "npm run test:client && npm run test:server"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.4.0",
+    "prettier": "^3.8.1",
+    "typescript-eslint": "^8.57.1"
+  }
+}

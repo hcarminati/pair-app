@@ -11,7 +11,7 @@ describe("RegisterPage", () => {
         <RegisterPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole("textbox", { name: /display name/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /display name/i })).toBeInTheDocument();
   });
 
   it("renders an email input field", () => {
@@ -20,7 +20,7 @@ describe("RegisterPage", () => {
         <RegisterPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole("textbox", { name: /email/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /email/i })).toBeInTheDocument();
   });
 
   it("renders a password input field", () => {
@@ -29,7 +29,7 @@ describe("RegisterPage", () => {
         <RegisterPage />
       </MemoryRouter>
     );
-    expect(screen.getByLabelText(/password/i)).toBeDefined();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
   });
 
   it('renders a "Create account" submit button', () => {
@@ -38,7 +38,7 @@ describe("RegisterPage", () => {
         <RegisterPage />
       </MemoryRouter>
     );
-    expect(screen.getByRole("button", { name: /create account/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
   });
 
   it("shows an error message when submitted with empty fields", async () => {
@@ -53,7 +53,7 @@ describe("RegisterPage", () => {
     await user.click(submitButton);
 
     const errorMessage = await screen.findByText(/required/i);
-    expect(errorMessage).toBeDefined();
+    expect(errorMessage).toBeInTheDocument();
   });
 
   it("renders a link to the Login page (/login)", () => {
@@ -64,7 +64,7 @@ describe("RegisterPage", () => {
     );
     
     const loginLink = screen.getByRole("link", { name: /login/i });
-    expect(loginLink).toBeDefined();
+    expect(loginLink).toBeInTheDocument();
     expect(loginLink.getAttribute("href")).toBe("/login");
   });
 });

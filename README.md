@@ -1,5 +1,7 @@
 # pair-app
 
+[![CI](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml)
+
 This project is a monorepo containing a `client` and a `server` application. It uses npm workspaces to manage dependencies across both projects.
 
 ## Prerequisites

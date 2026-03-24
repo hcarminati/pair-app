@@ -18,35 +18,51 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-container">
-      <h1>Log in</h1>
-      <form className="auth-form" onSubmit={handleSubmit} noValidate>
-        {error && <p className="form-error">{error}</p>}
-        <div className="form-field">
-          <label htmlFor="email">Email</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
+    <div className="auth-page">
+      <div className="auth-panel">
+        <div className="auth-panel-content">
+          <h1 className="auth-title">Log in</h1>
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            {error && <p className="form-error">{error}</p>}
+            <div className="form-field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="password">Password</label>
+              <input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="btn-primary">
+              Log in
+            </button>
+          </form>
+          <p className="auth-link">
+            No account? <Link to="/register">Register</Link>
+          </p>
         </div>
-        <div className="form-field">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+      </div>
+      <div className="auth-info-panel">
+        <div className="auth-info-content">
+          <h2 className="auth-info-title">How it works</h2>
+          <ol className="auth-steps">
+            <li>Both partners register</li>
+            <li>Link with your partner</li>
+            <li>Both opt in to connect</li>
+          </ol>
         </div>
-        <button type="submit" className="btn-primary">
-          Log in
-        </button>
-      </form>
-      <p className="auth-link">
-        No account? <Link to="/register">Register</Link>
-      </p>
+      </div>
     </div>
   );
 }

@@ -51,7 +51,7 @@ export default function LinkPartnerPage() {
         <div className="onboarding-divider"><span>or</span></div>
 
         <form onSubmit={handleSubmit} noValidate>
-          <h2 className="onboarding-section-title">Paste partner's token</h2>
+          <h2 className="onboarding-section-title">{`Paste partner's token`}</h2>
           {error && <p className="form-error">{error}</p>}
           <input
             className="onboarding-input"

@@ -7,6 +7,7 @@ vi.mock("../lib/supabase.js", () => {
     auth: {
       admin: {
         createUser: vi.fn(),
+        getUserById: vi.fn(),
       },
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
@@ -24,6 +25,7 @@ const { app } = await import("../app.js");
 
 const mockAdmin = supabase.auth.admin as {
   createUser: ReturnType<typeof vi.fn>;
+  getUserById: ReturnType<typeof vi.fn>;
 };
 const mockAuth = supabase.auth as {
   signInWithPassword: ReturnType<typeof vi.fn>;
@@ -66,6 +68,117 @@ describe("POST /auth/register", () => {
       user: { id: "user-123", email: "alice@example.com" },
       session: { access_token: "access-token-abc" },
     });
+  });
+
+  it("returns 400 when user provides their own invite token", async () => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              id: "token-id-1",
+              created_by: "partner-user-id",
+              used_by: null,
+              expires_at: new Date(Date.now() + 60_000).toISOString(),
+            },
+            error: null,
+          }),
+        }),
+      }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    });
+    mockAdmin.getUserById.mockResolvedValue({
+      data: { user: { email: "alice@example.com" } },
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "secret123",
+      inviteToken: "some-token",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cannot use your own invite token/i);
+  });
+
+  it("returns 400 when invite token does not exist", async () => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: { message: "Not found" } }),
+        }),
+      }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "secret123",
+      inviteToken: "nonexistent-token",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/invalid/i);
+  });
+
+  it("returns 400 when invite token has already been used", async () => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              id: "token-id-1",
+              created_by: "partner-user-id",
+              used_by: "someone-else",
+              expires_at: new Date(Date.now() + 60_000).toISOString(),
+            },
+            error: null,
+          }),
+        }),
+      }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "secret123",
+      inviteToken: "used-token",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/already been used/i);
+  });
+
+  it("returns 400 when invite token has expired", async () => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              id: "token-id-1",
+              created_by: "partner-user-id",
+              used_by: null,
+              expires_at: new Date(Date.now() - 60_000).toISOString(),
+            },
+            error: null,
+          }),
+        }),
+      }),
+      insert: vi.fn().mockResolvedValue({ error: null }),
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "secret123",
+      inviteToken: "expired-token",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/expired/i);
   });
 
   it("returns 409 when email is already registered", async () => {

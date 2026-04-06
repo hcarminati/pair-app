@@ -5,15 +5,47 @@ import { supabase } from "../lib/supabase.js";
 export const authRouter = Router();
 
 authRouter.post("/register", async (req: Request, res: Response) => {
-  const { displayName, email, password } = req.body as {
+  const { displayName, email, password, inviteToken } = req.body as {
     displayName?: string;
     email?: string;
     password?: string;
+    inviteToken?: string;
   };
 
   if (!displayName || !email || !password) {
     res.status(400).json({ error: "displayName, email, and password are required" });
     return;
+  }
+
+  if (inviteToken) {
+    const { data: tokenRow, error: tokenError } = await supabase
+      .from("invite_tokens")
+      .select("id, created_by, used_by, expires_at")
+      .eq("token", inviteToken)
+      .single();
+
+    if (tokenError || !tokenRow) {
+      res.status(400).json({ error: "Invite token is invalid" });
+      return;
+    }
+
+    if (tokenRow.used_by !== null) {
+      res.status(400).json({ error: "Invite token has already been used" });
+      return;
+    }
+
+    if (new Date(tokenRow.expires_at) < new Date()) {
+      res.status(400).json({ error: "Invite token has expired" });
+      return;
+    }
+
+    const { data: creatorData } = await supabase.auth.admin.getUserById(
+      tokenRow.created_by,
+    );
+    if (creatorData.user?.email?.toLowerCase() === email.toLowerCase()) {
+      res.status(400).json({ error: "You cannot use your own invite token" });
+      return;
+    }
   }
 
   const { data: createData, error: createError } =
@@ -41,6 +73,36 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     id: user.id,
     display_name: displayName,
   });
+
+  if (inviteToken) {
+    const { data: tokenRow } = await supabase
+      .from("invite_tokens")
+      .select("id, created_by")
+      .eq("token", inviteToken)
+      .single();
+
+    if (tokenRow) {
+      await supabase
+        .from("invite_tokens")
+        .update({ used_by: user.id, used_at: new Date().toISOString() })
+        .eq("id", tokenRow.id);
+
+      await supabase
+        .from("profiles")
+        .update({ partner_id: tokenRow.created_by })
+        .eq("id", user.id);
+
+      await supabase
+        .from("profiles")
+        .update({ partner_id: user.id })
+        .eq("id", tokenRow.created_by);
+
+      await supabase.from("pairs").insert({
+        profile_id_1: tokenRow.created_by,
+        profile_id_2: user.id,
+      });
+    }
+  }
 
   const { data: signInData, error: signInError } =
     await supabase.auth.signInWithPassword({ email, password });

@@ -221,50 +221,81 @@ DECLINED           → Request declined at stage 1 or stage 2
 ```sql
 -- Supabase manages auth.users; profiles extend it
 profiles
-  id            uuid PRIMARY KEY REFERENCES auth.users(id)
+  id            uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
   display_name  text NOT NULL
-  partner_id    uuid REFERENCES profiles(id)   -- null until linked
-  created_at    timestamptz DEFAULT now()
+  partner_id    uuid REFERENCES profiles(id) ON DELETE SET NULL  -- null until linked
+  about_me      text                                              -- individual bio, nullable
+  location      text                                              -- individual location, e.g. "Portland, OR", nullable
+  created_at    timestamptz NOT NULL DEFAULT now()
+  updated_at    timestamptz NOT NULL DEFAULT now()
+
+-- Couple-level record; created on linking, deleted explicitly on delink (also cascades on profile delete)
+pairs
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  profile_id_1  uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+  profile_id_2  uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+  about_us      text                                              -- shared couple bio, shown on discover card
+  location      text                                              -- shared couple location, shown on discover card
+  created_at    timestamptz NOT NULL DEFAULT now()
+  updated_at    timestamptz NOT NULL DEFAULT now()
+
+-- Single-use partner-linking tokens; expires_at set by Express service layer (created_at + 72h)
+invite_tokens
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  token       text NOT NULL UNIQUE
+  created_by  uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+  used_by     uuid REFERENCES profiles(id) ON DELETE SET NULL
+  expires_at  timestamptz NOT NULL
+  used_at     timestamptz
+  created_at  timestamptz NOT NULL DEFAULT now()
 
 tags
   id        uuid PRIMARY KEY DEFAULT gen_random_uuid()
-  label     text NOT NULL UNIQUE   -- normalized lowercase, trimmed
-  is_custom bool DEFAULT false
+  label     text NOT NULL UNIQUE   -- normalized: lowercase, trimmed
+  is_custom bool NOT NULL DEFAULT false
+  created_at timestamptz NOT NULL DEFAULT now()
 
 user_tags
-  user_id   uuid REFERENCES profiles(id)
-  tag_id    uuid REFERENCES tags(id)
+  user_id   uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+  tag_id    uuid NOT NULL REFERENCES tags(id) ON DELETE CASCADE
   PRIMARY KEY (user_id, tag_id)
 
+-- All 4 participant IDs stored directly so backend can determine couple-side without joins
 connection_requests
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
-  status      text CHECK (status IN ('PENDING','CONNECTED','DECLINED')) DEFAULT 'PENDING'
-  created_at  timestamptz DEFAULT now()
-  updated_at  timestamptz DEFAULT now()
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid()
+  couple_1_user_a uuid NOT NULL REFERENCES profiles(id)
+  couple_1_user_b uuid NOT NULL REFERENCES profiles(id)
+  couple_2_user_a uuid NOT NULL REFERENCES profiles(id)
+  couple_2_user_b uuid NOT NULL REFERENCES profiles(id)
+  status          connection_status NOT NULL DEFAULT 'INTEREST_PENDING'
+    -- ENUM: INTEREST_PENDING | INTEREST_ALIGNED | REQUEST_PENDING | CONNECTED | DECLINED
+  created_at      timestamptz NOT NULL DEFAULT now()
+  updated_at      timestamptz NOT NULL DEFAULT now()
 
 connection_request_participants
-  request_id  uuid REFERENCES connection_requests(id) ON DELETE CASCADE
-  user_id     uuid REFERENCES profiles(id)
-  interested  bool DEFAULT false
+  request_id  uuid NOT NULL REFERENCES connection_requests(id) ON DELETE CASCADE
+  user_id     uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
+  interested  bool NOT NULL DEFAULT false
   PRIMARY KEY (request_id, user_id)
 
-messages
+messages  -- Supabase Realtime enabled
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid()
-  request_id  uuid REFERENCES connection_requests(id) ON DELETE CASCADE
-  sender_id   uuid REFERENCES profiles(id)
+  request_id  uuid NOT NULL REFERENCES connection_requests(id) ON DELETE CASCADE
+  sender_id   uuid NOT NULL REFERENCES profiles(id) ON DELETE CASCADE
   content     text NOT NULL
-  created_at  timestamptz DEFAULT now()
+  created_at  timestamptz NOT NULL DEFAULT now()
 ```
 
 **State transition rules (enforced in backend):**
-- `PENDING` → `CONNECTED`: all four participants have `interested = true`
-- Any participant sets `interested = false` → status set to `DECLINED`
-- Duplicate request prevention: backend rejects new requests between two couples if any request already exists between them in any direction
+- `INTEREST_PENDING` → `INTEREST_ALIGNED`: both partners of couple 1 have `interested = true`
+- `INTEREST_ALIGNED` → `REQUEST_PENDING`: request dispatched to couple 2
+- `REQUEST_PENDING` → `CONNECTED`: all four participants have `interested = true`
+- Any participant sets `interested = false` at any stage → status set to `DECLINED`
+- Duplicate request prevention: backend rejects new requests between two couples if any request already exists between them in any direction (FR-CONN-09)
 
-**How this plays out for the "Couples your partner wants to connect with" page:**
-- Person A sets `interested = true` → Person B sees Couple 2 on their partner interest page and can set their own `interested`
-- Person C sees Couple 1 in their discovery feed and sets `interested = true` independently → Person D sees Couple 1 on their partner interest page
-- Once all four are `interested = true` → `CONNECTED`
+**Note on `location`:** Both `profiles.location` (individual) and `pairs.location` (shared) are plain text columns — no map or geolocation logic in v1. `pairs.location` is the shared couple location shown on the discover card. This supersedes FR-TAG-04.
+
+**Note on `about_me` / `about_us`:** Individual bios (`about_me`) live on `profiles`. The shared couple bio (`about_us`) and shared location live on `pairs`. The discover card shows `pairs.about_us` and `pairs.location`; clicking into a card reveals each partner's individual `about_me`.
 
 **Access control:** The Express backend connects to Supabase using the service role key, bypassing RLS. All authorization logic is enforced in backend route handlers. The frontend never holds the service role key — it only calls the Express API.
 

@@ -47,11 +47,15 @@ Pair is a couples-only friend-matching web app. The unit of identity is a **coup
 - Supabase Realtime is subscribed to directly from the frontend (chat only).
 
 ## Data Model (key tables)
-- `profiles` — extends `auth.users`; has `partner_id` (null until linked)
+- `profiles` — extends `auth.users`; has `partner_id` (null until linked), `about_me` (individual bio, nullable), `location` (individual location, nullable — e.g. "Portland, OR")
+- `pairs` — couple-level record created on linking; has `profile_id_1`, `profile_id_2`, `about_us` (shared couple bio, nullable), `location` (shared couple location, nullable). Deleted by backend on delink; also cascades if either profile is deleted.
+- `invite_tokens` — single-use partner-linking tokens; expire 72h after creation
 - `tags` / `user_tags` — tags at the individual level, unioned at the couple level
-- `connection_requests` — status: `INTEREST_PENDING | INTEREST_ALIGNED | REQUEST_PENDING | CONNECTED | DECLINED`
+- `connection_requests` — status: `INTEREST_PENDING | INTEREST_ALIGNED | REQUEST_PENDING | CONNECTED | DECLINED`; stores all 4 participant IDs (`couple_1_user_a/b`, `couple_2_user_a/b`)
 - `connection_request_participants` — per-user `interested` bool (4 rows per request)
-- `messages` — linked to a `connection_request` (the chat thread)
+- `messages` — linked to a `connection_request` (the chat thread); Realtime-enabled
+
+> **Note on location:** Both `profiles.location` (individual) and `pairs.location` (shared) are plain text columns — no map or geolocation logic in v1. `pairs.location` is what displays on the discover card. This overrides FR-TAG-04 in the PRD.
 
 **Connection state machine:**
 ```
@@ -92,7 +96,7 @@ Transitions are enforced **only in the Express backend**, never in client code.
 - Don't skip the duplicate-request check before inserting a new `connection_requests` row
 - Don't show which partner declined a request to the requesting couple (FR-CONN-08 / privacy requirement)
 - Don't surface incomplete couple profiles (one partner unregistered) in the discovery feed
-- Don't add map or geolocation logic — location is a plain text tag in v1
+- Don't add map or geolocation logic — location is a plain text field on both `profiles` (individual) and `pairs` (shared) in v1
 
 ## Commands
 

@@ -1,20 +1,45 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
+import { setTokens } from "../lib/authStore";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email || !password) {
       setError("All fields are required");
       return;
     }
     setError("");
-    // TODO: call POST /auth/login
-    console.log("login", { email, password });
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        session?: { access_token: string; refresh_token: string };
+      };
+      if (!res.ok) {
+        setError(data.error ?? "Login failed. Please try again.");
+        return;
+      }
+      if (data.session) {
+        setTokens(data.session.access_token, data.session.refresh_token);
+      }
+      navigate("/");
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -44,7 +69,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
               Log in
             </button>
           </form>

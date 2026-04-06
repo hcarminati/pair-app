@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiFetch } from "../lib/api";
+import { setTokens } from "../lib/authStore";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -7,17 +9,38 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!displayName || !email || !password) {
       setError("All fields are required");
       return;
     }
     setError("");
-    // TODO: call POST /auth/register
-    console.log("register", { displayName, email, password });
-    navigate("/register/link-partner");
+    setIsSubmitting(true);
+    try {
+      const res = await apiFetch("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ displayName, email, password }),
+      });
+      const data = (await res.json()) as {
+        error?: string;
+        session?: { access_token: string; refresh_token: string };
+      };
+      if (!res.ok) {
+        setError(data.error ?? "Registration failed. Please try again.");
+        return;
+      }
+      if (data.session) {
+        setTokens(data.session.access_token, data.session.refresh_token);
+      }
+      navigate("/register/link-partner");
+    } catch {
+      setError("Unable to connect to the server. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -57,7 +80,7 @@ export default function RegisterPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <button type="submit" className="btn-primary">
+            <button type="submit" className="btn-primary" disabled={isSubmitting}>
               Create account
             </button>
           </form>

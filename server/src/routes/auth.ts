@@ -46,6 +46,17 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       res.status(400).json({ error: "You cannot use your own invite token" });
       return;
     }
+
+    const { data: creatorProfile } = await supabase
+      .from("profiles")
+      .select("partner_id")
+      .eq("id", tokenRow.created_by)
+      .single();
+
+    if (creatorProfile?.partner_id !== null) {
+      res.status(400).json({ error: "This invite token belongs to a user who is already paired" });
+      return;
+    }
   }
 
   const { data: createData, error: createError } =

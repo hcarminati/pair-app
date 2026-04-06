@@ -102,6 +102,54 @@ describe("POST /auth/register", () => {
     expect(res.body.error).toMatch(/cannot use your own invite token/i);
   });
 
+  it("returns 400 when invite token creator is already paired", async () => {
+    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
+      if (table === "invite_tokens") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: {
+                  id: "token-id-1",
+                  created_by: "partner-user-id",
+                  used_by: null,
+                  expires_at: new Date(Date.now() + 60_000).toISOString(),
+                },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { partner_id: "already-linked-user" },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      return { insert: vi.fn().mockResolvedValue({ error: null }) };
+    });
+    mockAdmin.getUserById.mockResolvedValue({
+      data: { user: { email: "bob@example.com" } },
+    });
+
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "secret123",
+      inviteToken: "some-token",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/already paired/i);
+  });
+
   it("returns 400 when invite token does not exist", async () => {
     (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
       select: vi.fn().mockReturnValue({

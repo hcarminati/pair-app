@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { supabase } from "../lib/supabase.js";
+import { hashToken } from "../lib/tokenHash.js";
 
 export const authRouter = Router();
 
@@ -21,7 +22,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     const { data: tokenRow, error: tokenError } = await supabase
       .from("invite_tokens")
       .select("id, created_by, used_by, expires_at")
-      .eq("token", inviteToken)
+      .eq("token_hash", hashToken(inviteToken))
       .single();
 
     if (tokenError || !tokenRow) {
@@ -89,7 +90,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     const { data: tokenRow } = await supabase
       .from("invite_tokens")
       .select("id, created_by")
-      .eq("token", inviteToken)
+      .eq("token_hash", hashToken(inviteToken))
       .single();
 
     if (tokenRow) {

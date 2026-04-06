@@ -1,36 +1,63 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { apiFetch } from '../lib/api'
 import StepIndicator from '../components/StepIndicator'
 
 const STEPS = [{ label: 'Account' }, { label: 'Link partner' }, { label: 'Interests' }]
 
-function generateToken(): string {
-  const seg = () => Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0')
-  return `${seg()}-${seg()}-${seg()}`
-}
-
 export default function LinkPartnerPage() {
   const navigate = useNavigate()
-  const [myToken] = useState(generateToken)
+  const [myToken, setMyToken] = useState<string | null>(null)
+  const [tokenLoading, setTokenLoading] = useState(true)
+  const [tokenError, setTokenError] = useState('')
   const [partnerToken, setPartnerToken] = useState('')
   const [copied, setCopied] = useState(false)
-  const [error, setError] = useState('')
+  const [linkError, setLinkError] = useState('')
+  const [linking, setLinking] = useState(false)
+
+  useEffect(() => {
+    async function generateToken() {
+      const res = await apiFetch('/couples/invite', { method: 'POST' })
+      if (!res.ok) {
+        const data = await res.json() as { error?: string }
+        setTokenError(data.error ?? 'Failed to generate invite token')
+      } else {
+        const data = await res.json() as { token: string }
+        setMyToken(data.token)
+      }
+      setTokenLoading(false)
+    }
+    void generateToken()
+  }, [])
 
   async function handleCopy() {
+    if (!myToken) return
     await navigator.clipboard.writeText(myToken)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!partnerToken.trim()) {
-      setError("Partner token is required")
+      setLinkError('Partner token is required')
       return
     }
-    setError('')
-    // TODO: call POST /auth/link-partner
-    console.log('link partner', { partnerToken })
+    setLinkError('')
+    setLinking(true)
+
+    const res = await apiFetch('/couples/link', {
+      method: 'POST',
+      body: JSON.stringify({ token: partnerToken.trim() }),
+    })
+
+    if (!res.ok) {
+      const data = await res.json() as { error?: string }
+      setLinkError(data.error ?? 'Failed to link accounts. Please try again.')
+      setLinking(false)
+      return
+    }
+
     navigate('/register/interests')
   }
 
@@ -41,18 +68,24 @@ export default function LinkPartnerPage() {
 
         <section>
           <h2 className="onboarding-section-title">Your invite token</h2>
-          <div className="token-box">{myToken}</div>
-          <button type="button" className="copy-link" onClick={handleCopy}>
-            {copied ? 'Copied!' : 'Copy link'}
-          </button>
-          <p className="token-hint">Expires in 72 hours · single use</p>
+          {tokenLoading && <p className="token-hint">Generating your token…</p>}
+          {tokenError && <p className="form-error">{tokenError}</p>}
+          {myToken && (
+            <>
+              <div className="token-box">{myToken}</div>
+              <button type="button" className="copy-link" onClick={handleCopy}>
+                {copied ? 'Copied!' : 'Copy link'}
+              </button>
+              <p className="token-hint">Expires in 72 hours · single use</p>
+            </>
+          )}
         </section>
 
         <div className="onboarding-divider"><span>or</span></div>
 
         <form onSubmit={handleSubmit} noValidate>
           <h2 className="onboarding-section-title">{"Paste partner's token"}</h2>
-          {error && <p className="form-error">{error}</p>}
+          {linkError && <p className="form-error">{linkError}</p>}
           <input
             className="onboarding-input"
             type="text"
@@ -60,8 +93,12 @@ export default function LinkPartnerPage() {
             value={partnerToken}
             onChange={(e) => setPartnerToken(e.target.value)}
           />
-          <button type="submit" className="btn-primary onboarding-submit">
-            Link accounts
+          <button
+            type="submit"
+            className="btn-primary onboarding-submit"
+            disabled={linking}
+          >
+            {linking ? 'Linking…' : 'Link accounts'}
           </button>
         </form>
       </div>

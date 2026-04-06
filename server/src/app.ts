@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { authRouter } from "./routes/auth.js";
+import { couplesRouter } from "./routes/couples.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -12,6 +13,7 @@ app.get("/health", (_, res) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/couples", couplesRouter);
 
 app.use(errorHandler);
 

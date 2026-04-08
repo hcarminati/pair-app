@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { supabase } from "../lib/supabase.js";
+import { verifyToken } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
@@ -101,6 +102,16 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     },
     partnerId: profileData?.partner_id ?? null,
   });
+});
+
+authRouter.post("/logout", verifyToken, async (req: Request, res: Response) => {
+  const token = req.headers["authorization"]!.slice(7);
+  const { error } = await supabase.auth.admin.signOut(token);
+  if (error) {
+    res.status(500).json({ error: "Failed to log out" });
+    return;
+  }
+  res.status(204).send();
 });
 
 authRouter.post("/refresh", async (req: Request, res: Response) => {

@@ -7,6 +7,7 @@ vi.mock("../lib/supabase.js", () => {
     auth: {
       admin: {
         createUser: vi.fn(),
+        signOut: vi.fn(),
       },
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
@@ -24,6 +25,7 @@ const { app } = await import("../app.js");
 
 const mockAdmin = supabase.auth.admin as {
   createUser: ReturnType<typeof vi.fn>;
+  signOut: ReturnType<typeof vi.fn>;
 };
 const mockAuth = supabase.auth as {
   signInWithPassword: ReturnType<typeof vi.fn>;
@@ -165,6 +167,44 @@ describe("POST /auth/login", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toMatch(/invalid email or password/i);
+  });
+});
+
+describe("POST /auth/logout", () => {
+  it("returns 204 on successful logout", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null,
+    });
+    mockAdmin.signOut.mockResolvedValue({ error: null });
+
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(res.status).toBe(204);
+    expect(mockAdmin.signOut).toHaveBeenCalledWith("valid-token");
+  });
+
+  it("returns 401 when no token is provided", async () => {
+    const res = await request(app).post("/auth/logout");
+
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 500 when Supabase signOut fails", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null,
+    });
+    mockAdmin.signOut.mockResolvedValue({ error: { message: "signOut failed" } });
+
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed to log out/i);
   });
 });
 

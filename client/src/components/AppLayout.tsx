@@ -39,11 +39,11 @@ export default function AppLayout() {
           {!isPaired && (
             <>
               <div className="partner-unlinked-card">
-                <p className="partner-unlinked-title">Partner unlinked</p>
+                <p className="partner-unlinked-title">Partner Unlinked</p>
                 <p className="partner-unlinked-sub">Reconnect to continue</p>
               </div>
               <Link to="/profile" className="app-nav-link">
-                Link partner
+                Link Partner
               </Link>
             </>
           )}

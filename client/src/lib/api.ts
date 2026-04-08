@@ -15,6 +15,10 @@ export async function apiFetch(
   return fetch(`${BASE_URL}${path}`, { ...options, headers });
 }
 
+export async function logout(): Promise<void> {
+  await apiFetch("/auth/logout", { method: "POST" });
+}
+
 export async function refreshAccessToken(): Promise<boolean> {
   const refresh_token = getRefreshToken();
   if (!refresh_token) return false;

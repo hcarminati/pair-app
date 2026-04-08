@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { clearTokens } from '../../lib/authStore'
+import { logout } from '../../lib/api'
 
 const PRESET_INTERESTS = [
   'hiking', 'board games', 'cooking', 'films', 'cycling',
@@ -7,11 +10,13 @@ const PRESET_INTERESTS = [
 const MAX_INTERESTS = 10
 
 export function MyProfileTab() {
+  const navigate = useNavigate()
   const [tags, setTags] = useState<string[]>(PRESET_INTERESTS)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [customTag, setCustomTag] = useState('')
   const [aboutMe, setAboutMe] = useState('')
   const [location, setLocation] = useState('')
+  const [loggingOut, setLoggingOut] = useState(false)
 
   function toggleTag(tag: string) {
     setSelected((prev) => {
@@ -118,6 +123,19 @@ export function MyProfileTab() {
 
       <button type="button" className="btn-primary" onClick={handleSave}>
         Save profile
+      </button>
+      <button
+        type="button"
+        className="btn-outlined"
+        disabled={loggingOut}
+        onClick={async () => {
+          setLoggingOut(true)
+          await logout()
+          clearTokens()
+          navigate('/login')
+        }}
+      >
+        {loggingOut ? 'Logging out...' : 'Log out'}
       </button>
     </div>
   )

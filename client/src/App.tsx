@@ -1,16 +1,45 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import AppLayout from "./components/AppLayout";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import LinkPartnerPage from "./pages/LinkPartnerPage";
 import AddInterestsPage from "./pages/AddInterestsPage";
+import ProfilePage from "./pages/ProfilePage";
+import DiscoverPage from "./pages/DiscoverPage";
+import InboundRequestsPage from "./pages/InboundRequestsPage";
+import PartnerInterestsPage from "./pages/PartnerInterestsPage";
+import ConnectionsPage from "./pages/ConnectionsPage";
+import { RequireAuth } from "./components/RequireAuth";
+import { RequireAuthAndPaired } from "./components/RequireAuthAndPaired";
 
 export default function App() {
   return (
     <Routes>
+      {/* Public */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/register/link-partner" element={<LinkPartnerPage />} />
-      <Route path="/register/interests" element={<AddInterestsPage />} />
+
+      {/* Auth only — onboarding step (no app shell) */}
+      <Route element={<RequireAuth />}>
+        <Route path="/register/interests" element={<AddInterestsPage />} />
+      </Route>
+
+      {/* Auth only — app shell */}
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+      </Route>
+
+      {/* Auth + paired — app shell */}
+      <Route element={<RequireAuthAndPaired />}>
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<DiscoverPage />} />
+          <Route path="/inbound-requests" element={<InboundRequestsPage />} />
+          <Route path="/partner-interests" element={<PartnerInterestsPage />} />
+          <Route path="/connections" element={<ConnectionsPage />} />
+        </Route>
+      </Route>
+
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

@@ -70,7 +70,7 @@ Interviews with target users validated the following findings:
 |----|-------|----------|
 | US-06 | As a couple (both partners registered), I want to browse other visible couple profiles ranked by shared tag overlap. | P0 |
 | US-07 | As a user, I want to filter the discovery feed by specific tags so I can narrow results to what matters most. | P0 |
-| US-08 | As a user whose partner hasn't registered yet, I want to browse profiles but be blocked from sending connection requests. | P0 |
+| US-08 | As a user who hasn't linked with a partner yet, I want to be directed to my profile page to complete linking before accessing the discovery feed or any other screen. | P0 |
 
 ### 3.3 Connection Requests & Mutual Consent
 | ID | Story | Priority |
@@ -130,7 +130,7 @@ Interviews with target users validated the following findings:
 - **FR-DISC-02:** Each couple card in the discovery feed displays the shared tag count (e.g., "4 tags in common") before the user clicks in.
 - **FR-DISC-03:** Users can filter the feed by one or more specific tags.
 - **FR-DISC-04:** A couple's own profile is excluded from their discovery feed.
-- **FR-DISC-05:** Incomplete couples (one partner not yet registered) can browse but cannot initiate connection requests. A UI notice explains why.
+- **FR-DISC-05:** Unlinked users (no partner) cannot access the discovery feed or any other screen beyond their profile page. The Profile → "Link partner" tab prompts them to link with a partner before continuing.
 - **FR-DISC-06:** Already-connected couples are hidden from the discovery feed.
 - **FR-DISC-07:** Couples whose connection request was declined are silently removed from the requesting couple's pending list — no rejection notice is shown.
 

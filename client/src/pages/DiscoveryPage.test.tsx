@@ -8,16 +8,18 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
-    expect(screen.getByRole("heading", { name: /discover couples/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /discover couples/i }),
+    ).toBeInTheDocument();
   });
 
   it("displays couples ranked by shared tag count descending", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     const counts = screen
       .getAllByText(/in common/i)
@@ -31,7 +33,7 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     const badges = screen.getAllByText(/in common/i);
     expect(badges.length).toBeGreaterThan(0);
@@ -41,7 +43,7 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument();
   });
@@ -50,7 +52,7 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     const buttons = screen.getAllByRole("button", { name: /i'm interested/i });
     expect(buttons.length).toBeGreaterThan(0);
@@ -61,10 +63,12 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={false} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByText(/link with a partner/i)).toBeInTheDocument();
-    expect(screen.queryAllByRole("button", { name: /i'm interested/i })).toHaveLength(0);
+    expect(
+      screen.queryAllByRole("button", { name: /i'm interested/i }),
+    ).toHaveLength(0);
   });
 
   // FR-DISC-04: incomplete couples excluded
@@ -72,7 +76,7 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.queryByText(/incomplete couple/i)).not.toBeInTheDocument();
   });
@@ -82,7 +86,7 @@ describe("DiscoveryPage", () => {
     render(
       <MemoryRouter>
         <DiscoveryPage isLinked={true} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.queryByText(/already connected/i)).not.toBeInTheDocument();
   });

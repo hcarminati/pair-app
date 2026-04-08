@@ -46,6 +46,18 @@ Pair is a couples-only friend-matching web app. The unit of identity is a **coup
 - The frontend **never** holds the service role key. It only calls the Express API.
 - Supabase Realtime is subscribed to directly from the frontend (chat only).
 
+**Client route guard levels:**
+| Level | Routes | Guard component |
+|-------|--------|----------------|
+| Public | `/login`, `/register` | none |
+| Auth only | `/register/interests`, `/profile` | `RequireAuth` — redirects to `/login` if no token |
+| Auth + paired | `/` and all app screens | `RequireAuthAndPaired` — redirects to `/login` (no token) or `/profile` (not paired) |
+
+**Client registration flow:**
+1. `/register` — create account → navigates to `/register/interests`
+2. `/register/interests` — select individual interest tags (2-step indicator: Account → Interests) → navigates to `/profile`
+3. `/profile` — "Link partner" tab shown by default; invite token UI lives here. After linking → navigates to `/`
+
 ## Data Model (key tables)
 - `profiles` — extends `auth.users`; has `partner_id` (null until linked), `about_me` (individual bio, nullable), `location` (individual location, nullable — e.g. "Portland, OR")
 - `pairs` — couple-level record created on linking; has `profile_id_1`, `profile_id_2`, `about_us` (shared couple bio, nullable), `location` (shared couple location, nullable). Deleted by backend on delink; also cascades if either profile is deleted.

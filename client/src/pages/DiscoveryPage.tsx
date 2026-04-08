@@ -133,7 +133,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
 
   const toggleFilter = (tag: string) => {
     setActiveFilters((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
@@ -141,15 +141,15 @@ export default function DiscoveryPage({ isLinked }: Props) {
   // FR-DISC-06: exclude already-connected couples
   // FR-DISC-05: exclude incomplete couples
   const eligibleCouples = PLACEHOLDER_COUPLES.filter(
-    (c) => c.complete && !c.connected
+    (c) => c.complete && !c.connected,
   ).sort((a, b) => b.inCommon - a.inCommon);
 
   const visibleCouples =
     activeFilters.length === 0
       ? eligibleCouples
       : eligibleCouples.filter((c) =>
-        activeFilters.some((f) => c.interests.includes(f))
-      );
+          activeFilters.some((f) => c.interests.includes(f)),
+        );
 
   return (
     <div className="discovery-page">
@@ -232,7 +232,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
               >
                 {(() => {
                   const couple = visibleCouples.find(
-                    (c) => c.id === selectedCouple
+                    (c) => c.id === selectedCouple,
                   );
                   if (!couple) return null;
                   return (

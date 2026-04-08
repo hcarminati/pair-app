@@ -8,7 +8,7 @@ function renderPage() {
   return render(
     <MemoryRouter>
       <AddInterestsPage />
-    </MemoryRouter>
+    </MemoryRouter>,
   );
 }
 
@@ -16,7 +16,6 @@ describe("AddInterestsPage", () => {
   it("renders the step indicator", () => {
     renderPage();
     expect(screen.getByText("Account")).toBeInTheDocument();
-    expect(screen.getByText("Link partner")).toBeInTheDocument();
     expect(screen.getByText("Interests")).toBeInTheDocument();
   });
 
@@ -54,8 +53,18 @@ describe("AddInterestsPage", () => {
   it("does not select more than 10 tags", async () => {
     const user = userEvent.setup();
     renderPage();
-    const presets = ["hiking", "board games", "cooking", "films", "cycling",
-                     "travel", "yoga", "trivia", "wine", "running"];
+    const presets = [
+      "hiking",
+      "board games",
+      "cooking",
+      "films",
+      "cycling",
+      "travel",
+      "yoga",
+      "trivia",
+      "wine",
+      "running",
+    ];
     for (const tag of presets) {
       await user.click(screen.getByRole("button", { name: tag }));
     }
@@ -84,7 +93,10 @@ describe("AddInterestsPage", () => {
   it("adds a custom tag when Enter is pressed", async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByPlaceholderText(/add custom tag/i), "pottery{Enter}");
+    await user.type(
+      screen.getByPlaceholderText(/add custom tag/i),
+      "pottery{Enter}",
+    );
     expect(screen.getByRole("button", { name: "pottery" })).toBeInTheDocument();
   });
 
@@ -98,6 +110,8 @@ describe("AddInterestsPage", () => {
 
   it("renders the Save & continue button", () => {
     renderPage();
-    expect(screen.getByRole("button", { name: /save & continue/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /save & continue/i }),
+    ).toBeInTheDocument();
   });
 });

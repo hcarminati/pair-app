@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
-import { setTokens } from "../lib/authStore";
+import { setIsPaired, setTokens } from "../lib/authStore";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export default function LoginPage() {
       const data = (await res.json()) as {
         error?: string;
         session?: { access_token: string; refresh_token: string };
+        partnerId?: string | null;
       };
       if (!res.ok) {
         setError(data.error ?? "Login failed. Please try again.");
@@ -34,7 +35,8 @@ export default function LoginPage() {
       if (data.session) {
         setTokens(data.session.access_token, data.session.refresh_token);
       }
-      navigate("/");
+      setIsPaired(!!data.partnerId);
+      navigate(data.partnerId ? "/" : "/profile");
     } catch {
       setError("Unable to connect to the server. Please try again.");
     } finally {
@@ -70,7 +72,10 @@ export default function LoginPage() {
               />
             </div>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              Log in
+              <span className="btn-primary-inner">
+                {isSubmitting && <span className="btn-spinner" />}
+                {isSubmitting ? "Logging in…" : "Log in"}
+              </span>
             </button>
           </form>
           <p className="auth-link">

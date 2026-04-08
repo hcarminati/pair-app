@@ -80,12 +80,19 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("partner_id")
+    .eq("id", data.user.id)
+    .single();
+
   res.status(200).json({
     user: { id: data.user.id, email: data.user.email },
     session: {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
     },
+    partnerId: profileData?.partner_id ?? null,
   });
 });
 

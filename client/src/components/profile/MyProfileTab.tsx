@@ -1,21 +1,17 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import StepIndicator from '../components/StepIndicator'
-
-const STEPS = [{ label: 'Account' }, { label: 'Interests' }]
 
 const PRESET_INTERESTS = [
   'hiking', 'board games', 'cooking', 'films', 'cycling',
   'travel', 'yoga', 'trivia', 'wine', 'running',
 ]
-
 const MAX_INTERESTS = 10
 
-export default function AddInterestsPage() {
-  const navigate = useNavigate()
+export function MyProfileTab() {
   const [tags, setTags] = useState<string[]>(PRESET_INTERESTS)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [customTag, setCustomTag] = useState('')
+  const [aboutMe, setAboutMe] = useState('')
+  const [location, setLocation] = useState('')
 
   function toggleTag(tag: string) {
     setSelected((prev) => {
@@ -40,17 +36,31 @@ export default function AddInterestsPage() {
     setCustomTag('')
   }
 
-  function handleSubmit() {
-    // TODO: call PATCH /users/me/interests
-    console.log('interests', [...selected])
-    navigate('/profile')
+  function handleSave() {
+    // TODO: PATCH /profiles/me
+    console.log('save profile', { selected: [...selected], aboutMe, location })
   }
 
   return (
-    <div className="onboarding-page">
-      <div className="onboarding-content">
-        <StepIndicator steps={STEPS} currentStep={1} />
+    <div className="profile-tab-pane">
+      <div className="profile-user-header">
+        <div className="profile-avatar">KO</div>
+        <p className="profile-display-name">Kim O.</p>
+      </div>
 
+      <div className="form-row">
+        <div className="form-field">
+          <label htmlFor="displayName">Display name</label>
+          <input id="displayName" type="text" placeholder="Enter your name" readOnly />
+        </div>
+        <div className="form-field">
+          <label htmlFor="profileEmail">Email</label>
+          <input id="profileEmail" type="email" placeholder="you@example.com" readOnly />
+        </div>
+      </div>
+
+      <div className="form-field">
+        <label>Interests</label>
         <div className="interest-tags">
           {tags.map((tag) => (
             <button
@@ -63,7 +73,6 @@ export default function AddInterestsPage() {
             </button>
           ))}
         </div>
-
         <div className="custom-tag-row">
           <input
             className="onboarding-input"
@@ -82,13 +91,34 @@ export default function AddInterestsPage() {
             Add
           </button>
         </div>
-
         <p className="interests-count">{selected.size} / {MAX_INTERESTS} selected</p>
-
-        <button type="button" className="btn-primary" onClick={handleSubmit}>
-          Save & continue
-        </button>
       </div>
+
+      <div className="form-field">
+        <label htmlFor="aboutMe">About me</label>
+        <textarea
+          id="aboutMe"
+          placeholder="Tell others about yourself..."
+          value={aboutMe}
+          onChange={(e) => setAboutMe(e.target.value)}
+          rows={4}
+        />
+      </div>
+
+      <div className="form-field">
+        <label htmlFor="profileLocation">Location</label>
+        <input
+          id="profileLocation"
+          type="text"
+          placeholder="City, State"
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+        />
+      </div>
+
+      <button type="button" className="btn-primary" onClick={handleSave}>
+        Save profile
+      </button>
     </div>
   )
 }

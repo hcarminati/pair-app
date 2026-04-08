@@ -16,7 +16,6 @@ describe("AddInterestsPage", () => {
   it("renders the step indicator", () => {
     renderPage();
     expect(screen.getByText("Account")).toBeInTheDocument();
-    expect(screen.getByText("Link partner")).toBeInTheDocument();
     expect(screen.getByText("Interests")).toBeInTheDocument();
   });
 

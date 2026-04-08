@@ -101,7 +101,7 @@ describe("RegisterPage", () => {
     });
   });
 
-  it("redirects to /register/link-partner on successful registration", async () => {
+  it("redirects to /register/interests on successful registration", async () => {
     const user = userEvent.setup();
     mockApiFetch.mockResolvedValue({
       ok: true,
@@ -117,7 +117,7 @@ describe("RegisterPage", () => {
     await user.type(screen.getByLabelText(/password/i), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/register/link-partner");
+    expect(mockNavigate).toHaveBeenCalledWith("/register/interests");
   });
 
   it("displays 409 duplicate email error inline", async () => {

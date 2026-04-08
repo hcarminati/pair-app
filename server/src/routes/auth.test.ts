@@ -35,6 +35,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
     insert: vi.fn().mockResolvedValue({ error: null }),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi.fn().mockResolvedValue({ data: { partner_id: null }, error: null }),
   });
 });
 
@@ -107,7 +110,35 @@ describe("POST /auth/login", () => {
     expect(res.body).toMatchObject({
       user: { email: "alice@example.com" },
       session: { access_token: "access-token-abc" },
+      partnerId: null,
     });
+  });
+
+  it("returns partnerId when user is linked to a partner", async () => {
+    mockAuth.signInWithPassword.mockResolvedValue({
+      data: {
+        user: { id: "user-123", email: "alice@example.com" },
+        session: {
+          access_token: "access-token-abc",
+          refresh_token: "refresh-token-xyz",
+        },
+      },
+      error: null,
+    });
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      insert: vi.fn(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: { partner_id: "partner-456" }, error: null }),
+    });
+
+    const res = await request(app).post("/auth/login").send({
+      email: "alice@example.com",
+      password: "secret123",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.partnerId).toBe("partner-456");
   });
 
   it("returns 401 when password is wrong", async () => {

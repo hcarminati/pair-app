@@ -35,7 +35,7 @@ export default function RegisterPage() {
       if (data.session) {
         setTokens(data.session.access_token, data.session.refresh_token);
       }
-      navigate("/register/link-partner");
+      navigate("/register/interests");
     } catch {
       setError("Unable to connect to the server. Please try again.");
     } finally {
@@ -81,7 +81,10 @@ export default function RegisterPage() {
               />
             </div>
             <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              Create account
+              <span className="btn-primary-inner">
+                {isSubmitting && <span className="btn-spinner" />}
+                {isSubmitting ? "Creating account…" : "Create account"}
+              </span>
             </button>
           </form>
           <p className="auth-link">

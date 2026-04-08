@@ -501,3 +501,295 @@ code {
   color: #aaa;
   margin-bottom: 24px;
 }
+
+/* ── Discovery page ──────────────────────────────────────── */
+
+.discovery-page {
+  padding: 24px;
+  text-align: left;
+}
+
+.discovery-page h1 {
+  font-size: 24px;
+  letter-spacing: -0.3px;
+  margin: 0 0 8px;
+}
+
+.discovery-page h2 {
+  font-size: 20px;
+  margin: 0 0 4px;
+}
+
+.discovery-page h3 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.discovery-header {
+  margin-bottom: 24px;
+}
+
+.discovery-subtitle {
+  color: #999;
+  font-size: 15px;
+  margin: 0;
+}
+
+/* Filter pills */
+
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.pill {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: #000;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+  font: inherit;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pill:hover {
+  border-color: #999;
+}
+
+.pill--active {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+}
+
+.pill--sm {
+  font-size: 12px;
+  padding: 2px 8px;
+}
+
+/* Couple grid */
+
+.couple-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+/* Couple card */
+
+.couple-card {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  text-align: left;
+}
+
+.couple-card:hover {
+  border-color: #000;
+}
+
+.couple-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  gap: 8px;
+}
+
+.couple-card-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.couple-names {
+  font-size: 15px;
+  font-weight: 500;
+  color: #000;
+}
+
+/* Avatar pair */
+
+.avatar-pair {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  color: #000;
+  border-radius: 50%;
+  font-weight: 500;
+}
+
+.avatar--sm {
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+}
+
+.avatar--md {
+  width: 40px;
+  height: 40px;
+  font-size: 13px;
+}
+
+.avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: 15px;
+}
+
+.avatar--overlap {
+  margin-left: -8px;
+  border: 2px solid #fff;
+}
+
+/* Interest pills on card */
+
+.interest-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+/* Buttons */
+
+.btn {
+  padding: 10px 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  border: none;
+}
+
+.btn--primary {
+  background: #000;
+  color: #fff;
+  border: none;
+}
+
+.btn--primary:hover {
+  background: #333;
+}
+
+.btn--secondary {
+  background: #fff;
+  color: #000;
+  border: 1px solid #000;
+}
+
+.btn--secondary:hover {
+  background: #f5f5f5;
+}
+
+.btn--full {
+  width: 100%;
+}
+
+/* Unlinked state */
+
+.discovery-unlinked {
+  max-width: 480px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 64px 0;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.discovery-unlinked-box {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.discovery-unlinked-hint {
+  font-size: 14px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* Detail modal */
+
+.discovery-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 50;
+}
+
+.discovery-modal {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.discovery-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.discovery-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.discovery-modal-close:hover {
+  opacity: 0.6;
+}
+
+.discovery-modal-section {
+  margin-bottom: 24px;
+}
+
+.discovery-modal-common {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.text-muted {
+  color: #666;
+  font-size: 15px;
+}

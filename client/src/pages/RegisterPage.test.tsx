@@ -38,7 +38,9 @@ function renderRegisterPage() {
 describe("RegisterPage", () => {
   it("renders a display name input field", () => {
     renderRegisterPage();
-    expect(screen.getByRole("textbox", { name: /display name/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: /display name/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders an email input field", () => {
@@ -48,19 +50,38 @@ describe("RegisterPage", () => {
 
   it("renders a password input field", () => {
     renderRegisterPage();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
   it('renders a "Create account" submit button', () => {
     renderRegisterPage();
-    expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /create account/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error when password is too short", async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await user.type(screen.getByLabelText(/display name/i), "Alice");
+    await user.type(screen.getByLabelText(/email/i), "alice@example.com");
+    await user.type(screen.getByLabelText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(
+      await screen.findByText(/at least 8 characters/i),
+    ).toBeInTheDocument();
+    expect(mockApiFetch).not.toHaveBeenCalled();
   });
 
   it("shows an error message when submitted with empty fields", async () => {
     const user = userEvent.setup();
     renderRegisterPage();
 
-    const submitButton = screen.getByRole("button", { name: /create account/i });
+    const submitButton = screen.getByRole("button", {
+      name: /create account/i,
+    });
     await user.click(submitButton);
 
     const errorMessage = await screen.findByText(/required/i);
@@ -88,7 +109,7 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(mockApiFetch).toHaveBeenCalledWith("/auth/register", {
@@ -101,7 +122,7 @@ describe("RegisterPage", () => {
     });
   });
 
-  it("redirects to /register/link-partner on successful registration", async () => {
+  it("redirects to /register/interests on successful registration", async () => {
     const user = userEvent.setup();
     mockApiFetch.mockResolvedValue({
       ok: true,
@@ -114,29 +135,29 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(mockNavigate).toHaveBeenCalledWith("/register/link-partner");
+    expect(mockNavigate).toHaveBeenCalledWith("/register/interests");
   });
 
   it("displays 409 duplicate email error inline", async () => {
     const user = userEvent.setup();
     mockApiFetch.mockResolvedValue({
       ok: false,
-      json: async () => ({ error: "An account with that email already exists." }),
+      json: async () => ({
+        error: "An account with that email already exists.",
+      }),
     } as Response);
 
     renderRegisterPage();
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(
-      await screen.findByText(/already exists/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
@@ -151,12 +172,10 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(
-      await screen.findByText(/registration failed/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/registration failed/i)).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

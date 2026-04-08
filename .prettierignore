@@ -10,3 +10,6 @@ pnpm-lock.yaml
 LICENSE.md
 tsconfig.json
 tsconfig.*.json
+CLAUDE.md
+README.md
+docs/

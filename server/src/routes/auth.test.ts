@@ -7,7 +7,7 @@ vi.mock("../lib/supabase.js", () => {
     auth: {
       admin: {
         createUser: vi.fn(),
-        getUserById: vi.fn(),
+        signOut: vi.fn(),
       },
       signInWithPassword: vi.fn(),
       getUser: vi.fn(),
@@ -23,11 +23,11 @@ vi.mock("../lib/supabase.js", () => {
 const { supabase } = await import("../lib/supabase.js");
 const { app } = await import("../app.js");
 
-const mockAdmin = supabase.auth.admin as {
+const mockAdmin = supabase.auth.admin as unknown as {
   createUser: ReturnType<typeof vi.fn>;
-  getUserById: ReturnType<typeof vi.fn>;
+  signOut: ReturnType<typeof vi.fn>;
 };
-const mockAuth = supabase.auth as {
+const mockAuth = supabase.auth as unknown as {
   signInWithPassword: ReturnType<typeof vi.fn>;
   getUser: ReturnType<typeof vi.fn>;
   refreshSession: ReturnType<typeof vi.fn>;
@@ -37,6 +37,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
     insert: vi.fn().mockResolvedValue({ error: null }),
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    single: vi
+      .fn()
+      .mockResolvedValue({ data: { partner_id: null }, error: null }),
   });
 });
 
@@ -70,169 +75,23 @@ describe("POST /auth/register", () => {
     });
   });
 
-  it("returns 400 when user provides their own invite token", async () => {
-    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              id: "token-id-1",
-              created_by: "partner-user-id",
-              used_by: null,
-              expires_at: new Date(Date.now() + 60_000).toISOString(),
-            },
-            error: null,
-          }),
-        }),
-      }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
-    mockAdmin.getUserById.mockResolvedValue({
-      data: { user: { email: "alice@example.com" } },
-    });
-
+  it("returns 400 when password is too short", async () => {
     const res = await request(app).post("/auth/register").send({
       displayName: "Alice",
       email: "alice@example.com",
-      password: "secret123",
-      inviteToken: "some-token",
+      password: "short",
     });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/cannot use your own invite token/i);
-  });
-
-  it("returns 400 when invite token creator is already paired", async () => {
-    (supabase.from as ReturnType<typeof vi.fn>).mockImplementation((table: string) => {
-      if (table === "invite_tokens") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: {
-                  id: "token-id-1",
-                  created_by: "partner-user-id",
-                  used_by: null,
-                  expires_at: new Date(Date.now() + 60_000).toISOString(),
-                },
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      if (table === "profiles") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { partner_id: "already-linked-user" },
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-      return { insert: vi.fn().mockResolvedValue({ error: null }) };
-    });
-    mockAdmin.getUserById.mockResolvedValue({
-      data: { user: { email: "bob@example.com" } },
-    });
-
-    const res = await request(app).post("/auth/register").send({
-      displayName: "Alice",
-      email: "alice@example.com",
-      password: "secret123",
-      inviteToken: "some-token",
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/already paired/i);
-  });
-
-  it("returns 400 when invite token does not exist", async () => {
-    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: "Not found" } }),
-        }),
-      }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
-
-    const res = await request(app).post("/auth/register").send({
-      displayName: "Alice",
-      email: "alice@example.com",
-      password: "secret123",
-      inviteToken: "nonexistent-token",
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/invalid/i);
-  });
-
-  it("returns 400 when invite token has already been used", async () => {
-    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              id: "token-id-1",
-              created_by: "partner-user-id",
-              used_by: "someone-else",
-              expires_at: new Date(Date.now() + 60_000).toISOString(),
-            },
-            error: null,
-          }),
-        }),
-      }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
-
-    const res = await request(app).post("/auth/register").send({
-      displayName: "Alice",
-      email: "alice@example.com",
-      password: "secret123",
-      inviteToken: "used-token",
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/already been used/i);
-  });
-
-  it("returns 400 when invite token has expired", async () => {
-    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              id: "token-id-1",
-              created_by: "partner-user-id",
-              used_by: null,
-              expires_at: new Date(Date.now() - 60_000).toISOString(),
-            },
-            error: null,
-          }),
-        }),
-      }),
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    });
-
-    const res = await request(app).post("/auth/register").send({
-      displayName: "Alice",
-      email: "alice@example.com",
-      password: "secret123",
-      inviteToken: "expired-token",
-    });
-
-    expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/expired/i);
+    expect(res.body.error).toMatch(/at least 8 characters/i);
   });
 
   it("returns 409 when email is already registered", async () => {
     mockAdmin.createUser.mockResolvedValue({
       data: { user: null },
-      error: { message: "A user with this email address has already been registered" },
+      error: {
+        message: "A user with this email address has already been registered",
+      },
     });
 
     const res = await request(app).post("/auth/register").send({
@@ -268,7 +127,38 @@ describe("POST /auth/login", () => {
     expect(res.body).toMatchObject({
       user: { email: "alice@example.com" },
       session: { access_token: "access-token-abc" },
+      partnerId: null,
     });
+  });
+
+  it("returns partnerId when user is linked to a partner", async () => {
+    mockAuth.signInWithPassword.mockResolvedValue({
+      data: {
+        user: { id: "user-123", email: "alice@example.com" },
+        session: {
+          access_token: "access-token-abc",
+          refresh_token: "refresh-token-xyz",
+        },
+      },
+      error: null,
+    });
+    (supabase.from as ReturnType<typeof vi.fn>).mockReturnValue({
+      insert: vi.fn(),
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({
+        data: { partner_id: "partner-456" },
+        error: null,
+      }),
+    });
+
+    const res = await request(app).post("/auth/login").send({
+      email: "alice@example.com",
+      password: "secret123",
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.body.partnerId).toBe("partner-456");
   });
 
   it("returns 401 when password is wrong", async () => {
@@ -284,6 +174,89 @@ describe("POST /auth/login", () => {
 
     expect(res.status).toBe(401);
     expect(res.body.error).toMatch(/invalid email or password/i);
+  });
+});
+
+describe("POST /auth/logout", () => {
+  it("returns 204 on successful logout", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null,
+    });
+    mockAdmin.signOut.mockResolvedValue({ error: null });
+
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(res.status).toBe(204);
+    expect(mockAdmin.signOut).toHaveBeenCalledWith("valid-token");
+  });
+
+  it("returns 401 when no token is provided", async () => {
+    const res = await request(app).post("/auth/logout");
+
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 500 when Supabase signOut fails", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: { id: "user-123" } },
+      error: null,
+    });
+    mockAdmin.signOut.mockResolvedValue({
+      error: { message: "signOut failed" },
+    });
+
+    const res = await request(app)
+      .post("/auth/logout")
+      .set("Authorization", "Bearer valid-token");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed to log out/i);
+  });
+});
+
+describe("POST /auth/refresh", () => {
+  it("returns 200 with new tokens on valid refresh_token", async () => {
+    mockAuth.refreshSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "new-access-token",
+          refresh_token: "new-refresh-token",
+        },
+      },
+      error: null,
+    });
+
+    const res = await request(app)
+      .post("/auth/refresh")
+      .send({ refresh_token: "valid-refresh-token" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.session.access_token).toBe("new-access-token");
+    expect(res.body.session.refresh_token).toBe("new-refresh-token");
+  });
+
+  it("returns 401 when refresh_token is expired or invalid", async () => {
+    mockAuth.refreshSession.mockResolvedValue({
+      data: { session: null },
+      error: { message: "Token has expired" },
+    });
+
+    const res = await request(app)
+      .post("/auth/refresh")
+      .send({ refresh_token: "expired-token" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/session expired/i);
+  });
+
+  it("returns 400 when refresh_token is missing", async () => {
+    const res = await request(app).post("/auth/refresh").send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/refresh_token is required/i);
   });
 });
 

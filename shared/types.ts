@@ -5,22 +5,22 @@
 // ============================================================
 
 export type ConnectionStatus =
-  | 'INTEREST_PENDING'
-  | 'INTEREST_ALIGNED'
-  | 'REQUEST_PENDING'
-  | 'CONNECTED'
-  | 'DECLINED';
+  | "INTEREST_PENDING"
+  | "INTEREST_ALIGNED"
+  | "REQUEST_PENDING"
+  | "CONNECTED"
+  | "DECLINED";
 
 // ----------------------------------------------------------------
 // profiles
 // ----------------------------------------------------------------
 export interface Profile {
-  id: string;           // uuid — matches auth.users.id
+  id: string; // uuid — matches auth.users.id
   display_name: string;
   partner_id: string | null;
   about_me: string | null;
   location: string | null;
-  created_at: string;   // ISO 8601 timestamptz
+  created_at: string; // ISO 8601 timestamptz
   updated_at: string;
 }
 
@@ -30,8 +30,8 @@ export interface Profile {
 // ----------------------------------------------------------------
 export interface Pair {
   id: string;
-  profile_id_1: string;   // profiles.id
-  profile_id_2: string;   // profiles.id
+  profile_id_1: string; // profiles.id
+  profile_id_2: string; // profiles.id
   about_us: string | null;
   location: string | null;
   created_at: string;
@@ -44,7 +44,7 @@ export interface Pair {
 export interface InviteToken {
   id: string;
   token: string;
-  created_by: string;   // profiles.id
+  created_by: string; // profiles.id
   used_by: string | null;
   expires_at: string;
   used_at: string | null;
@@ -56,7 +56,7 @@ export interface InviteToken {
 // ----------------------------------------------------------------
 export interface Tag {
   id: string;
-  label: string;        // normalized: lowercase, trimmed
+  label: string; // normalized: lowercase, trimmed
   is_custom: boolean;
   created_at: string;
 }
@@ -65,8 +65,8 @@ export interface Tag {
 // user_tags
 // ----------------------------------------------------------------
 export interface UserTag {
-  user_id: string;      // profiles.id
-  tag_id: string;       // tags.id
+  user_id: string; // profiles.id
+  tag_id: string; // tags.id
 }
 
 // ----------------------------------------------------------------
@@ -76,10 +76,10 @@ export interface UserTag {
 // ----------------------------------------------------------------
 export interface ConnectionRequest {
   id: string;
-  couple_1_user_a: string;    // profiles.id
-  couple_1_user_b: string;    // profiles.id
-  couple_2_user_a: string;    // profiles.id
-  couple_2_user_b: string;    // profiles.id
+  couple_1_user_a: string; // profiles.id
+  couple_1_user_b: string; // profiles.id
+  couple_2_user_a: string; // profiles.id
+  couple_2_user_b: string; // profiles.id
   status: ConnectionStatus;
   created_at: string;
   updated_at: string;
@@ -90,8 +90,8 @@ export interface ConnectionRequest {
 // 4 rows per request (one per user).
 // ----------------------------------------------------------------
 export interface ConnectionRequestParticipant {
-  request_id: string;   // connection_requests.id
-  user_id: string;      // profiles.id
+  request_id: string; // connection_requests.id
+  user_id: string; // profiles.id
   interested: boolean;
 }
 
@@ -100,8 +100,8 @@ export interface ConnectionRequestParticipant {
 // ----------------------------------------------------------------
 export interface Message {
   id: string;
-  request_id: string;   // connection_requests.id
-  sender_id: string;    // profiles.id
+  request_id: string; // connection_requests.id
+  sender_id: string; // profiles.id
   content: string;
   created_at: string;
 }

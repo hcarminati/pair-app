@@ -1,63 +1,29 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { supabase } from "../lib/supabase.js";
-import { hashToken } from "../lib/tokenHash.js";
+import { verifyToken } from "../middleware/auth.js";
 
 export const authRouter = Router();
 
 authRouter.post("/register", async (req: Request, res: Response) => {
-  const { displayName, email, password, inviteToken } = req.body as {
+  const { displayName, email, password } = req.body as {
     displayName?: string;
     email?: string;
     password?: string;
-    inviteToken?: string;
   };
 
   if (!displayName || !email || !password) {
-    res.status(400).json({ error: "displayName, email, and password are required" });
+    res
+      .status(400)
+      .json({ error: "displayName, email, and password are required" });
     return;
   }
 
-  if (inviteToken) {
-    const { data: tokenRow, error: tokenError } = await supabase
-      .from("invite_tokens")
-      .select("id, created_by, used_by, expires_at")
-      .eq("token_hash", hashToken(inviteToken))
-      .single();
-
-    if (tokenError || !tokenRow) {
-      res.status(400).json({ error: "Invite token is invalid" });
-      return;
-    }
-
-    if (tokenRow.used_by !== null) {
-      res.status(400).json({ error: "Invite token has already been used" });
-      return;
-    }
-
-    if (new Date(tokenRow.expires_at) < new Date()) {
-      res.status(400).json({ error: "Invite token has expired" });
-      return;
-    }
-
-    const { data: creatorData } = await supabase.auth.admin.getUserById(
-      tokenRow.created_by,
-    );
-    if (creatorData.user?.email?.toLowerCase() === email.toLowerCase()) {
-      res.status(400).json({ error: "You cannot use your own invite token" });
-      return;
-    }
-
-    const { data: creatorProfile } = await supabase
-      .from("profiles")
-      .select("partner_id")
-      .eq("id", tokenRow.created_by)
-      .single();
-
-    if (creatorProfile?.partner_id !== null) {
-      res.status(400).json({ error: "This invite token belongs to a user who is already paired" });
-      return;
-    }
+  // matches shared/validation.ts MIN_PASSWORD_LENGTH but cannot import from shared/ due to tsconfig.json,
+  // so we manually duplicate the check here
+  if (password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
   }
 
   const { data: createData, error: createError } =
@@ -72,7 +38,9 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       createError.message.toLowerCase().includes("already registered") ||
       createError.message.toLowerCase().includes("already been registered")
     ) {
-      res.status(409).json({ error: "An account with that email already exists." });
+      res
+        .status(409)
+        .json({ error: "An account with that email already exists." });
       return;
     }
     res.status(400).json({ error: createError.message });
@@ -85,36 +53,6 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     id: user.id,
     display_name: displayName,
   });
-
-  if (inviteToken) {
-    const { data: tokenRow } = await supabase
-      .from("invite_tokens")
-      .select("id, created_by")
-      .eq("token_hash", hashToken(inviteToken))
-      .single();
-
-    if (tokenRow) {
-      await supabase
-        .from("invite_tokens")
-        .update({ used_by: user.id, used_at: new Date().toISOString() })
-        .eq("id", tokenRow.id);
-
-      await supabase
-        .from("profiles")
-        .update({ partner_id: tokenRow.created_by })
-        .eq("id", user.id);
-
-      await supabase
-        .from("profiles")
-        .update({ partner_id: user.id })
-        .eq("id", tokenRow.created_by);
-
-      await supabase.from("pairs").insert({
-        profile_id_1: tokenRow.created_by,
-        profile_id_2: user.id,
-      });
-    }
-  }
 
   const { data: signInData, error: signInError } =
     await supabase.auth.signInWithPassword({ email, password });
@@ -154,13 +92,30 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
+  const { data: profileData } = await supabase
+    .from("profiles")
+    .select("partner_id")
+    .eq("id", data.user.id)
+    .single();
+
   res.status(200).json({
     user: { id: data.user.id, email: data.user.email },
     session: {
       access_token: data.session.access_token,
       refresh_token: data.session.refresh_token,
     },
+    partnerId: profileData?.partner_id ?? null,
   });
+});
+
+authRouter.post("/logout", verifyToken, async (req: Request, res: Response) => {
+  const token = req.headers["authorization"]!.slice(7);
+  const { error } = await supabase.auth.admin.signOut(token);
+  if (error) {
+    res.status(500).json({ error: "Failed to log out" });
+    return;
+  }
+  res.status(204).send();
 });
 
 authRouter.post("/refresh", async (req: Request, res: Response) => {

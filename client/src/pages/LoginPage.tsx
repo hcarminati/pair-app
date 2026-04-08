@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
-import { setTokens } from "../lib/authStore";
+import { setIsPaired, setTokens } from "../lib/authStore";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,6 +27,7 @@ export default function LoginPage() {
       const data = (await res.json()) as {
         error?: string;
         session?: { access_token: string; refresh_token: string };
+        partnerId?: string | null;
       };
       if (!res.ok) {
         setError(data.error ?? "Login failed. Please try again.");
@@ -34,7 +36,8 @@ export default function LoginPage() {
       if (data.session) {
         setTokens(data.session.access_token, data.session.refresh_token);
       }
-      navigate("/");
+      setIsPaired(!!data.partnerId);
+      navigate(data.partnerId ? "/" : "/profile");
     } catch {
       setError("Unable to connect to the server. Please try again.");
     } finally {
@@ -61,16 +64,33 @@ export default function LoginPage() {
             </div>
             <div className="form-field">
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="password-input-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              Log in
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
+              <span className="btn-primary-inner">
+                {isSubmitting && <span className="btn-spinner" />}
+                {isSubmitting ? "Logging in…" : "Log in"}
+              </span>
             </button>
           </form>
           <p className="auth-link">

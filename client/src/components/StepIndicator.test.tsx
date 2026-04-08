@@ -2,7 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import StepIndicator from "./StepIndicator";
 
-const STEPS = [{ label: "Account" }, { label: "Link partner" }, { label: "Interests" }];
+const STEPS = [
+  { label: "Account" },
+  { label: "Link partner" },
+  { label: "Interests" },
+];
 
 describe("StepIndicator", () => {
   it("renders all step labels", () => {

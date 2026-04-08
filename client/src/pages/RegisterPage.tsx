@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { setTokens } from "../lib/authStore";
+import { validatePassword } from "../../../shared/validation";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -10,11 +11,17 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!displayName || !email || !password) {
       setError("All fields are required");
+      return;
+    }
+    const pwError = validatePassword(password);
+    if (pwError) {
+      setError(pwError);
       return;
     }
     setError("");
@@ -35,7 +42,7 @@ export default function RegisterPage() {
       if (data.session) {
         setTokens(data.session.access_token, data.session.refresh_token);
       }
-      navigate("/register/link-partner");
+      navigate("/register/interests");
     } catch {
       setError("Unable to connect to the server. Please try again.");
     } finally {
@@ -72,16 +79,33 @@ export default function RegisterPage() {
             </div>
             <div className="form-field">
               <label htmlFor="password">Password</label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="password-input-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
-              Create account
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
+              <span className="btn-primary-inner">
+                {isSubmitting && <span className="btn-spinner" />}
+                {isSubmitting ? "Creating account…" : "Create account"}
+              </span>
             </button>
           </form>
           <p className="auth-link">

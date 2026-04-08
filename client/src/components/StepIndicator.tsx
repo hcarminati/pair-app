@@ -1,13 +1,16 @@
 interface Step {
-  label: string
+  label: string;
 }
 
 interface StepIndicatorProps {
-  steps: Step[]
-  currentStep: number
+  steps: Step[];
+  currentStep: number;
 }
 
-export default function StepIndicator({ steps, currentStep }: StepIndicatorProps) {
+export default function StepIndicator({
+  steps,
+  currentStep,
+}: StepIndicatorProps) {
   return (
     <div className="step-indicator">
       {steps.map((step, i) => (
@@ -16,16 +19,22 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
           <div className="step-item">
             <div
               className={[
-                'step-circle',
+                "step-circle",
                 i < currentStep
-                  ? 'step-circle--done'
+                  ? "step-circle--done"
                   : i === currentStep
-                    ? 'step-circle--active'
-                    : 'step-circle--inactive'
-              ].join(' ')}
+                    ? "step-circle--active"
+                    : "step-circle--inactive",
+              ].join(" ")}
             >
               {i < currentStep ? (
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
                   <path
                     d="M3 8l3.5 3.5L13 5"
                     stroke="currentColor"
@@ -38,12 +47,14 @@ export default function StepIndicator({ steps, currentStep }: StepIndicatorProps
                 <span>{i + 1}</span>
               )}
             </div>
-            <span className={`step-label${i > currentStep ? ' step-label--inactive' : ''}`}>
+            <span
+              className={`step-label${i > currentStep ? " step-label--inactive" : ""}`}
+            >
               {step.label}
             </span>
           </div>
         </div>
       ))}
     </div>
-  )
+  );
 }

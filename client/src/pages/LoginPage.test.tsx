@@ -17,6 +17,7 @@ vi.mock("../lib/api", () => ({
 
 vi.mock("../lib/authStore", () => ({
   setTokens: vi.fn(),
+  setIsPaired: vi.fn(),
   getAccessToken: vi.fn(),
 }));
 
@@ -43,7 +44,7 @@ describe("LoginPage", () => {
 
   it("renders a password input field", () => {
     renderLoginPage();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
   it('renders a "Log in" submit button', () => {
@@ -82,31 +83,54 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(mockApiFetch).toHaveBeenCalledWith("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email: "alice@example.com", password: "secret123" }),
+      body: JSON.stringify({
+        email: "alice@example.com",
+        password: "secret123",
+      }),
     });
   });
 
-  it("redirects to / on successful login", async () => {
+  it("redirects to / on successful login when user is paired", async () => {
     const user = userEvent.setup();
     mockApiFetch.mockResolvedValue({
       ok: true,
       json: async () => ({
         session: { access_token: "tok", refresh_token: "ref" },
+        partnerId: "partner-456",
       }),
     } as Response);
 
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/");
+  });
+
+  it("redirects to /profile on successful login when user is not paired", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        session: { access_token: "tok", refresh_token: "ref" },
+        partnerId: null,
+      }),
+    } as Response);
+
+    renderLoginPage();
+
+    await user.type(screen.getByLabelText(/email/i), "alice@example.com");
+    await user.type(screen.getByLabelText("Password"), "secret123");
+    await user.click(screen.getByRole("button", { name: /log in/i }));
+
+    expect(mockNavigate).toHaveBeenCalledWith("/profile");
   });
 
   it("displays API error message on failed login", async () => {
@@ -119,10 +143,12 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrongpassword");
+    await user.type(screen.getByLabelText("Password"), "wrongpassword");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
-    expect(await screen.findByText(/invalid email or password/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/invalid email or password/i),
+    ).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

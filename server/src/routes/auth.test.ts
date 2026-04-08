@@ -23,11 +23,11 @@ vi.mock("../lib/supabase.js", () => {
 const { supabase } = await import("../lib/supabase.js");
 const { app } = await import("../app.js");
 
-const mockAdmin = supabase.auth.admin as {
+const mockAdmin = supabase.auth.admin as unknown as {
   createUser: ReturnType<typeof vi.fn>;
   signOut: ReturnType<typeof vi.fn>;
 };
-const mockAuth = supabase.auth as {
+const mockAuth = supabase.auth as unknown as {
   signInWithPassword: ReturnType<typeof vi.fn>;
   getUser: ReturnType<typeof vi.fn>;
   refreshSession: ReturnType<typeof vi.fn>;
@@ -146,12 +146,10 @@ describe("POST /auth/login", () => {
       insert: vi.fn(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      single: vi
-        .fn()
-        .mockResolvedValue({
-          data: { partner_id: "partner-456" },
-          error: null,
-        }),
+      single: vi.fn().mockResolvedValue({
+        data: { partner_id: "partner-456" },
+        error: null,
+      }),
     });
 
     const res = await request(app).post("/auth/login").send({

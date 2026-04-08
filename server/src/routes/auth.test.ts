@@ -217,6 +217,49 @@ describe("POST /auth/logout", () => {
   });
 });
 
+describe("POST /auth/refresh", () => {
+  it("returns 200 with new tokens on valid refresh_token", async () => {
+    mockAuth.refreshSession.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "new-access-token",
+          refresh_token: "new-refresh-token",
+        },
+      },
+      error: null,
+    });
+
+    const res = await request(app)
+      .post("/auth/refresh")
+      .send({ refresh_token: "valid-refresh-token" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.session.access_token).toBe("new-access-token");
+    expect(res.body.session.refresh_token).toBe("new-refresh-token");
+  });
+
+  it("returns 401 when refresh_token is expired or invalid", async () => {
+    mockAuth.refreshSession.mockResolvedValue({
+      data: { session: null },
+      error: { message: "Token has expired" },
+    });
+
+    const res = await request(app)
+      .post("/auth/refresh")
+      .send({ refresh_token: "expired-token" });
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/session expired/i);
+  });
+
+  it("returns 400 when refresh_token is missing", async () => {
+    const res = await request(app).post("/auth/refresh").send({});
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/refresh_token is required/i);
+  });
+});
+
 describe("verifyToken middleware", () => {
   // Use a protected route to test the middleware. We'll add a test route to app for this.
   // Instead, test indirectly via a route that uses verifyToken.

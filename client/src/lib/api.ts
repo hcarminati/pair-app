@@ -1,4 +1,9 @@
-import { getAccessToken, getRefreshToken, setTokens } from "./authStore";
+import {
+  clearTokens,
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+} from "./authStore";
 
 const BASE_URL = import.meta.env["VITE_API_URL"] ?? "http://localhost:3000";
 
@@ -12,7 +17,24 @@ export async function apiFetch(
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers as Record<string, string> | undefined),
   };
-  return fetch(`${BASE_URL}${path}`, { ...options, headers });
+
+  const res = await fetch(`${BASE_URL}${path}`, { ...options, headers });
+
+  if (res.status === 401) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      const newToken = getAccessToken();
+      const retryHeaders: Record<string, string> = {
+        ...headers,
+        ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}),
+      };
+      return fetch(`${BASE_URL}${path}`, { ...options, headers: retryHeaders });
+    }
+    clearTokens();
+    window.location.href = "/login";
+  }
+
+  return res;
 }
 
 export async function logout(): Promise<void> {

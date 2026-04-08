@@ -1,8 +1,8 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
-import { getIsPaired } from '../lib/authStore'
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { getIsPaired } from "../lib/authStore";
 
 export default function AppLayout() {
-  const isPaired = getIsPaired()
+  const isPaired = getIsPaired();
 
   return (
     <div className="app-shell">
@@ -12,25 +12,33 @@ export default function AppLayout() {
           <NavLink
             to="/"
             end
-            className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? " app-nav-link--active" : ""}`
+            }
           >
             Discover
           </NavLink>
           <NavLink
             to="/inbound-requests"
-            className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? " app-nav-link--active" : ""}`
+            }
           >
             Inbound Requests
           </NavLink>
           <NavLink
             to="/partner-interests"
-            className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? " app-nav-link--active" : ""}`
+            }
           >
             {`Partner's Interests`}
           </NavLink>
           <NavLink
             to="/connections"
-            className={({ isActive }) => `app-nav-link${isActive ? ' app-nav-link--active' : ''}`}
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? " app-nav-link--active" : ""}`
+            }
           >
             Connections
           </NavLink>
@@ -49,7 +57,9 @@ export default function AppLayout() {
           )}
           <NavLink
             to="/profile"
-            className={({ isActive }) => `app-sidebar-profile-link${isActive ? ' app-sidebar-profile-link--active' : ''}`}
+            className={({ isActive }) =>
+              `app-sidebar-profile-link${isActive ? " app-sidebar-profile-link--active" : ""}`
+            }
           >
             My Profile
           </NavLink>
@@ -59,5 +69,5 @@ export default function AppLayout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }

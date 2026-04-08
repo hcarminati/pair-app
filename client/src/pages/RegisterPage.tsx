@@ -97,7 +97,11 @@ export default function RegisterPage() {
                 </button>
               </div>
             </div>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
               <span className="btn-primary-inner">
                 {isSubmitting && <span className="btn-spinner" />}
                 {isSubmitting ? "Creating account…" : "Create account"}

@@ -39,7 +39,9 @@ beforeEach(() => {
     insert: vi.fn().mockResolvedValue({ error: null }),
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),
-    single: vi.fn().mockResolvedValue({ data: { partner_id: null }, error: null }),
+    single: vi
+      .fn()
+      .mockResolvedValue({ data: { partner_id: null }, error: null }),
   });
 });
 
@@ -87,7 +89,9 @@ describe("POST /auth/register", () => {
   it("returns 409 when email is already registered", async () => {
     mockAdmin.createUser.mockResolvedValue({
       data: { user: null },
-      error: { message: "A user with this email address has already been registered" },
+      error: {
+        message: "A user with this email address has already been registered",
+      },
     });
 
     const res = await request(app).post("/auth/register").send({
@@ -142,7 +146,12 @@ describe("POST /auth/login", () => {
       insert: vi.fn(),
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({ data: { partner_id: "partner-456" }, error: null }),
+      single: vi
+        .fn()
+        .mockResolvedValue({
+          data: { partner_id: "partner-456" },
+          error: null,
+        }),
     });
 
     const res = await request(app).post("/auth/login").send({
@@ -197,7 +206,9 @@ describe("POST /auth/logout", () => {
       data: { user: { id: "user-123" } },
       error: null,
     });
-    mockAdmin.signOut.mockResolvedValue({ error: { message: "signOut failed" } });
+    mockAdmin.signOut.mockResolvedValue({
+      error: { message: "signOut failed" },
+    });
 
     const res = await request(app)
       .post("/auth/logout")

@@ -1,49 +1,57 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { clearTokens } from '../../lib/authStore'
-import { logout } from '../../lib/api'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { clearTokens } from "../../lib/authStore";
+import { logout } from "../../lib/api";
 
 const PRESET_INTERESTS = [
-  'hiking', 'board games', 'cooking', 'films', 'cycling',
-  'travel', 'yoga', 'trivia', 'wine', 'running',
-]
-const MAX_INTERESTS = 10
+  "hiking",
+  "board games",
+  "cooking",
+  "films",
+  "cycling",
+  "travel",
+  "yoga",
+  "trivia",
+  "wine",
+  "running",
+];
+const MAX_INTERESTS = 10;
 
 export function MyProfileTab() {
-  const navigate = useNavigate()
-  const [tags, setTags] = useState<string[]>(PRESET_INTERESTS)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [customTag, setCustomTag] = useState('')
-  const [aboutMe, setAboutMe] = useState('')
-  const [location, setLocation] = useState('')
-  const [loggingOut, setLoggingOut] = useState(false)
+  const navigate = useNavigate();
+  const [tags, setTags] = useState<string[]>(PRESET_INTERESTS);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [customTag, setCustomTag] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
+  const [location, setLocation] = useState("");
+  const [loggingOut, setLoggingOut] = useState(false);
 
   function toggleTag(tag: string) {
     setSelected((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(tag)) {
-        next.delete(tag)
+        next.delete(tag);
       } else if (next.size < MAX_INTERESTS) {
-        next.add(tag)
+        next.add(tag);
       }
-      return next
-    })
+      return next;
+    });
   }
 
   function handleAddCustom() {
-    const trimmed = customTag.trim().toLowerCase()
-    if (!trimmed || tags.includes(trimmed)) return
-    setTags((prev) => [...prev, trimmed])
+    const trimmed = customTag.trim().toLowerCase();
+    if (!trimmed || tags.includes(trimmed)) return;
+    setTags((prev) => [...prev, trimmed]);
     setSelected((prev) => {
-      if (prev.size < MAX_INTERESTS) return new Set([...prev, trimmed])
-      return prev
-    })
-    setCustomTag('')
+      if (prev.size < MAX_INTERESTS) return new Set([...prev, trimmed]);
+      return prev;
+    });
+    setCustomTag("");
   }
 
   function handleSave() {
     // TODO: PATCH /profiles/me
-    console.log('save profile', { selected: [...selected], aboutMe, location })
+    console.log("save profile", { selected: [...selected], aboutMe, location });
   }
 
   return (
@@ -56,11 +64,21 @@ export function MyProfileTab() {
       <div className="form-row">
         <div className="form-field">
           <label htmlFor="displayName">Display name</label>
-          <input id="displayName" type="text" placeholder="Enter your name" readOnly />
+          <input
+            id="displayName"
+            type="text"
+            placeholder="Enter your name"
+            readOnly
+          />
         </div>
         <div className="form-field">
           <label htmlFor="profileEmail">Email</label>
-          <input id="profileEmail" type="email" placeholder="you@example.com" readOnly />
+          <input
+            id="profileEmail"
+            type="email"
+            placeholder="you@example.com"
+            readOnly
+          />
         </div>
       </div>
 
@@ -72,7 +90,7 @@ export function MyProfileTab() {
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
-              className={`tag${selected.has(tag) ? ' tag--selected' : ''}`}
+              className={`tag${selected.has(tag) ? " tag--selected" : ""}`}
             >
               {tag}
             </button>
@@ -86,17 +104,23 @@ export function MyProfileTab() {
             value={customTag}
             onChange={(e) => setCustomTag(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                handleAddCustom()
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddCustom();
               }
             }}
           />
-          <button type="button" className="btn-outlined" onClick={handleAddCustom}>
+          <button
+            type="button"
+            className="btn-outlined"
+            onClick={handleAddCustom}
+          >
             Add
           </button>
         </div>
-        <p className="interests-count">{selected.size} / {MAX_INTERESTS} selected</p>
+        <p className="interests-count">
+          {selected.size} / {MAX_INTERESTS} selected
+        </p>
       </div>
 
       <div className="form-field">
@@ -129,14 +153,14 @@ export function MyProfileTab() {
         className="btn-outlined"
         disabled={loggingOut}
         onClick={async () => {
-          setLoggingOut(true)
-          await logout()
-          clearTokens()
-          navigate('/login')
+          setLoggingOut(true);
+          await logout();
+          clearTokens();
+          navigate("/login");
         }}
       >
-        {loggingOut ? 'Logging out...' : 'Log out'}
+        {loggingOut ? "Logging out..." : "Log out"}
       </button>
     </div>
-  )
+  );
 }

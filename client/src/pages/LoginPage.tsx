@@ -82,7 +82,11 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+            >
               <span className="btn-primary-inner">
                 {isSubmitting && <span className="btn-spinner" />}
                 {isSubmitting ? "Logging in…" : "Log in"}

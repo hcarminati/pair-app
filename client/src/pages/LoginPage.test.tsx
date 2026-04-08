@@ -88,7 +88,10 @@ describe("LoginPage", () => {
 
     expect(mockApiFetch).toHaveBeenCalledWith("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email: "alice@example.com", password: "secret123" }),
+      body: JSON.stringify({
+        email: "alice@example.com",
+        password: "secret123",
+      }),
     });
   });
 
@@ -143,7 +146,9 @@ describe("LoginPage", () => {
     await user.type(screen.getByLabelText("Password"), "wrongpassword");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
-    expect(await screen.findByText(/invalid email or password/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/invalid email or password/i),
+    ).toBeInTheDocument();
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 });

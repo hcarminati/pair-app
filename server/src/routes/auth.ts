@@ -13,11 +13,13 @@ authRouter.post("/register", async (req: Request, res: Response) => {
   };
 
   if (!displayName || !email || !password) {
-    res.status(400).json({ error: "displayName, email, and password are required" });
+    res
+      .status(400)
+      .json({ error: "displayName, email, and password are required" });
     return;
   }
 
-  // matches shared/validation.ts MIN_PASSWORD_LENGTH but cannot import from shared/ due to tsconfig.json, 
+  // matches shared/validation.ts MIN_PASSWORD_LENGTH but cannot import from shared/ due to tsconfig.json,
   // so we manually duplicate the check here
   if (password.length < 8) {
     res.status(400).json({ error: "Password must be at least 8 characters" });
@@ -36,7 +38,9 @@ authRouter.post("/register", async (req: Request, res: Response) => {
       createError.message.toLowerCase().includes("already registered") ||
       createError.message.toLowerCase().includes("already been registered")
     ) {
-      res.status(409).json({ error: "An account with that email already exists." });
+      res
+        .status(409)
+        .json({ error: "An account with that email already exists." });
       return;
     }
     res.status(400).json({ error: createError.message });

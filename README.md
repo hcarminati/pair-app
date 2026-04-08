@@ -16,6 +16,44 @@ This project is a monorepo containing a `client` and a `server` application. It 
    npm install
    ```
 
+## Supabase Setup
+
+1. Create a Supabase project and enable **Email** authentication (Authentication → Providers).
+2. Go to the **SQL Editor** and run `project-memory/database-setup.sql` to create the schema, seed preset tags, and register the E2E test cleanup function.
+3. Set up environment variables:
+
+   **Server** (`server/.env`) — backend only, never expose these to the client:
+   ```bash
+   cp server/.env.example server/.env
+   ```
+   - `SUPABASE_URL` — found on the **Project Overview** homepage
+   - `SUPABASE_SECRET_KEY` — found under **Project Settings → API Keys** (secret key)
+
+   **Client** (`client/.env`) — used for Supabase Realtime and E2E test auth:
+   ```bash
+   cp client/.env.example client/.env
+   ```
+   - `VITE_SUPABASE_URL` — same project URL as above
+   - `VITE_SUPABASE_ANON_KEY` — found under **Project Settings → API Keys** (publishable key)
+
+## Database
+
+The schema, seed data, and E2E test helper function are all in `project-memory/database-setup.sql`.
+
+To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers the `delete_test_user()` cleanup function.
+
+### E2E Test Cleanup
+
+E2E test users are created with emails matching `test_e2e_%@example.com`. After a test run, each test user calls `delete_test_user()` to self-delete using their own JWT — no service role key required:
+
+```sql
+SELECT delete_test_user();
+```
+
+The function only allows deletion of accounts whose email matches `test_e2e_%@example.com` and handles cascade cleanup of all associated data.
+
+> **Running the Express server** requires a `.env` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY` from your Supabase project settings.
+
 ## Development
 
 You can run the development servers from the root directory:

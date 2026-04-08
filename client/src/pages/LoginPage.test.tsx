@@ -44,7 +44,7 @@ describe("LoginPage", () => {
 
   it("renders a password input field", () => {
     renderLoginPage();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
   it('renders a "Log in" submit button', () => {
@@ -83,7 +83,7 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(mockApiFetch).toHaveBeenCalledWith("/auth/login", {
@@ -105,7 +105,7 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/");
@@ -124,7 +124,7 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/profile");
@@ -140,7 +140,7 @@ describe("LoginPage", () => {
     renderLoginPage();
 
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrongpassword");
+    await user.type(screen.getByLabelText("Password"), "wrongpassword");
     await user.click(screen.getByRole("button", { name: /log in/i }));
 
     expect(await screen.findByText(/invalid email or password/i)).toBeInTheDocument();

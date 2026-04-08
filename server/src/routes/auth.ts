@@ -16,6 +16,13 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     return;
   }
 
+  // matches shared/validation.ts MIN_PASSWORD_LENGTH but cannot import from shared/ due to tsconfig.json, 
+  // so we manually duplicate the check here
+  if (password.length < 8) {
+    res.status(400).json({ error: "Password must be at least 8 characters" });
+    return;
+  }
+
   const { data: createData, error: createError } =
     await supabase.auth.admin.createUser({
       email,

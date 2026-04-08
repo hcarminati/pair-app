@@ -48,12 +48,25 @@ describe("RegisterPage", () => {
 
   it("renders a password input field", () => {
     renderRegisterPage();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
   });
 
   it('renders a "Create account" submit button', () => {
     renderRegisterPage();
     expect(screen.getByRole("button", { name: /create account/i })).toBeInTheDocument();
+  });
+
+  it("shows an error when password is too short", async () => {
+    const user = userEvent.setup();
+    renderRegisterPage();
+
+    await user.type(screen.getByLabelText(/display name/i), "Alice");
+    await user.type(screen.getByLabelText(/email/i), "alice@example.com");
+    await user.type(screen.getByLabelText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: /create account/i }));
+
+    expect(await screen.findByText(/at least 8 characters/i)).toBeInTheDocument();
+    expect(mockApiFetch).not.toHaveBeenCalled();
   });
 
   it("shows an error message when submitted with empty fields", async () => {
@@ -88,7 +101,7 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(mockApiFetch).toHaveBeenCalledWith("/auth/register", {
@@ -114,7 +127,7 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(mockNavigate).toHaveBeenCalledWith("/register/interests");
@@ -131,7 +144,7 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(
@@ -151,7 +164,7 @@ describe("RegisterPage", () => {
 
     await user.type(screen.getByLabelText(/display name/i), "Alice");
     await user.type(screen.getByLabelText(/email/i), "alice@example.com");
-    await user.type(screen.getByLabelText(/password/i), "secret123");
+    await user.type(screen.getByLabelText("Password"), "secret123");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
     expect(

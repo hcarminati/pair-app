@@ -71,6 +71,17 @@ describe("POST /auth/register", () => {
     });
   });
 
+  it("returns 400 when password is too short", async () => {
+    const res = await request(app).post("/auth/register").send({
+      displayName: "Alice",
+      email: "alice@example.com",
+      password: "short",
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/at least 8 characters/i);
+  });
+
   it("returns 409 when email is already registered", async () => {
     mockAdmin.createUser.mockResolvedValue({
       data: { user: null },

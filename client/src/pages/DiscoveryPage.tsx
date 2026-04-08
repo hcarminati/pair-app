@@ -148,8 +148,8 @@ export default function DiscoveryPage({ isLinked }: Props) {
     activeFilters.length === 0
       ? eligibleCouples
       : eligibleCouples.filter((c) =>
-          activeFilters.some((f) => c.interests.includes(f))
-        );
+        activeFilters.some((f) => c.interests.includes(f))
+      );
 
   return (
     <div className="discovery-page">
@@ -215,7 +215,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
                   className="btn btn--secondary btn--full"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  I'm interested
+                  {`I'm interested`}
                 </button>
               </div>
             ))}
@@ -279,7 +279,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
                         <span>{couple.inCommon} interests in common</span>
                       </div>
                       <button className="btn btn--primary btn--full">
-                        I'm interested
+                        {`I'm interested`}
                       </button>
                     </>
                   );

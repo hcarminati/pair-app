@@ -209,6 +209,22 @@ describe("POST /couples/link", () => {
     expect(res.body.message).toMatch(/successfully linked/i);
   });
 
+  it("returns 500 when rpc fails", async () => {
+    mockAuthenticatedUser(CURRENT_USER_ID);
+    mockValidTokenLookup();
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
+      error: { message: "DB error" },
+    });
+
+    const res = await request(app)
+      .post("/couples/link")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ token: "some-valid-token" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed to link/i);
+  });
+
   it("returns 400 when user submits their own token", async () => {
     mockAuthenticatedUser(CURRENT_USER_ID);
     mockValidTokenLookup({ created_by: CURRENT_USER_ID });
@@ -340,6 +356,91 @@ describe("POST /couples/link", () => {
     const res = await request(app)
       .post("/couples/link")
       .send({ token: "some-token" });
+
+    expect(res.status).toBe(401);
+  });
+});
+
+// ─── DELETE /couples/link ─────────────────────────────────────────────────────
+
+describe("DELETE /couples/link", () => {
+  it("returns 204 on successful unlink", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { partner_id: OTHER_USER_ID },
+            error: null,
+          }),
+        }),
+      }),
+    });
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+
+    const res = await request(app)
+      .delete("/couples/link")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(204);
+    expect(supabase.rpc).toHaveBeenCalledWith("unlink_partners", {
+      user_a: CURRENT_USER_ID,
+      partner: OTHER_USER_ID,
+    });
+  });
+
+  it("returns 400 when user is not paired", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { partner_id: null },
+            error: null,
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app)
+      .delete("/couples/link")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not currently paired/i);
+  });
+
+  it("returns 500 when rpc fails", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { partner_id: OTHER_USER_ID },
+            error: null,
+          }),
+        }),
+      }),
+    });
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
+      error: { message: "DB error" },
+    });
+
+    const res = await request(app)
+      .delete("/couples/link")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed to unlink/i);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Not authenticated" },
+    });
+
+    const res = await request(app).delete("/couples/link");
 
     expect(res.status).toBe(401);
   });

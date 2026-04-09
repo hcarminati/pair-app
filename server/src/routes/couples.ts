@@ -168,20 +168,16 @@ couplesRouter.delete(
 
     const partnerId = profile.partner_id as string;
 
-    await supabase
-      .from("profiles")
-      .update({ partner_id: null })
-      .eq("id", user.id);
+    const { error: unlinkError } = await supabase.rpc("unlink_partners", {
+      user_a: user.id,
+      partner: partnerId,
+    });
 
-    await supabase
-      .from("profiles")
-      .update({ partner_id: null })
-      .eq("id", partnerId);
-
-    await supabase
-      .from("pairs")
-      .delete()
-      .or(`profile_id_1.eq.${user.id},profile_id_2.eq.${user.id}`);
+    if (unlinkError) {
+      console.error("unlink error:", JSON.stringify(unlinkError));
+      res.status(500).json({ error: "Failed to unlink accounts" });
+      return;
+    }
 
     res.status(204).send();
   },

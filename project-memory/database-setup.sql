@@ -162,6 +162,21 @@ CREATE INDEX idx_messages_sender_id  ON public.messages(sender_id);
 ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
 
 -- ----------------------------------------------------------------
+-- link_partners
+-- Atomically links two profiles and creates the pairs row.
+-- Called from the Express backend via supabase.rpc().
+-- Runs as SECURITY INVOKER (service role caller bypasses RLS).
+-- ----------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.link_partners(user_a uuid, user_b uuid)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.profiles SET partner_id = user_b WHERE id = user_a;
+  UPDATE public.profiles SET partner_id = user_a WHERE id = user_b;
+  INSERT INTO public.pairs (profile_id_1, profile_id_2) VALUES (user_b, user_a);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ----------------------------------------------------------------
 -- Seed — preset interest tags
 -- ----------------------------------------------------------------
 INSERT INTO public.tags (label, is_custom) VALUES

@@ -41,7 +41,10 @@ This project is a monorepo containing a `client` and a `server` application. It 
 
 The schema, seed data, and E2E test helper function are all in `project-memory/database-setup.sql`.
 
-To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers the `delete_test_user()` cleanup function.
+To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers two functions:
+
+- `link_partners(user_a, user_b)` — atomically links two profiles and creates the `pairs` row in a single transaction; called by the Express backend via `supabase.rpc()`
+- `delete_test_user()` — E2E test cleanup (see below)
 
 ### E2E Test Cleanup
 

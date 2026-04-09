@@ -9,18 +9,22 @@ vi.mock("../lib/supabase.js", () => {
         createUser: vi.fn(),
         signOut: vi.fn(),
       },
-      signInWithPassword: vi.fn(),
       getUser: vi.fn(),
-      refreshSession: vi.fn(),
     },
     from: vi.fn().mockReturnValue({
       insert: vi.fn().mockResolvedValue({ error: null }),
     }),
   };
-  return { supabase: mockSupabase };
+  const mockSupabaseAuthClient = {
+    auth: {
+      signInWithPassword: vi.fn(),
+      refreshSession: vi.fn(),
+    },
+  };
+  return { supabase: mockSupabase, supabaseAuthClient: mockSupabaseAuthClient };
 });
 
-const { supabase } = await import("../lib/supabase.js");
+const { supabase, supabaseAuthClient } = await import("../lib/supabase.js");
 const { app } = await import("../app.js");
 
 const mockAdmin = supabase.auth.admin as unknown as {
@@ -28,8 +32,10 @@ const mockAdmin = supabase.auth.admin as unknown as {
   signOut: ReturnType<typeof vi.fn>;
 };
 const mockAuth = supabase.auth as unknown as {
-  signInWithPassword: ReturnType<typeof vi.fn>;
   getUser: ReturnType<typeof vi.fn>;
+};
+const mockAuthClient = supabaseAuthClient.auth as unknown as {
+  signInWithPassword: ReturnType<typeof vi.fn>;
   refreshSession: ReturnType<typeof vi.fn>;
 };
 
@@ -51,7 +57,7 @@ describe("POST /auth/register", () => {
       data: { user: { id: "user-123", email: "alice@example.com" } },
       error: null,
     });
-    mockAuth.signInWithPassword.mockResolvedValue({
+    mockAuthClient.signInWithPassword.mockResolvedValue({
       data: {
         user: { id: "user-123", email: "alice@example.com" },
         session: {
@@ -107,7 +113,7 @@ describe("POST /auth/register", () => {
 
 describe("POST /auth/login", () => {
   it("returns 200 with session on successful login", async () => {
-    mockAuth.signInWithPassword.mockResolvedValue({
+    mockAuthClient.signInWithPassword.mockResolvedValue({
       data: {
         user: { id: "user-123", email: "alice@example.com" },
         session: {
@@ -132,7 +138,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns partnerId when user is linked to a partner", async () => {
-    mockAuth.signInWithPassword.mockResolvedValue({
+    mockAuthClient.signInWithPassword.mockResolvedValue({
       data: {
         user: { id: "user-123", email: "alice@example.com" },
         session: {
@@ -162,7 +168,7 @@ describe("POST /auth/login", () => {
   });
 
   it("returns 401 when password is wrong", async () => {
-    mockAuth.signInWithPassword.mockResolvedValue({
+    mockAuthClient.signInWithPassword.mockResolvedValue({
       data: { user: null, session: null },
       error: { message: "Invalid login credentials" },
     });
@@ -219,7 +225,7 @@ describe("POST /auth/logout", () => {
 
 describe("POST /auth/refresh", () => {
   it("returns 200 with new tokens on valid refresh_token", async () => {
-    mockAuth.refreshSession.mockResolvedValue({
+    mockAuthClient.refreshSession.mockResolvedValue({
       data: {
         session: {
           access_token: "new-access-token",
@@ -239,7 +245,7 @@ describe("POST /auth/refresh", () => {
   });
 
   it("returns 401 when refresh_token is expired or invalid", async () => {
-    mockAuth.refreshSession.mockResolvedValue({
+    mockAuthClient.refreshSession.mockResolvedValue({
       data: { session: null },
       error: { message: "Token has expired" },
     });

@@ -6,13 +6,16 @@ vi.mock("../lib/supabase.js", () => {
     auth: { getUser: vi.fn() },
     from: vi.fn(),
   };
-  return { supabase: mockSupabase };
+  const mockSupabaseAuthClient = {
+    auth: { signInWithPassword: vi.fn(), refreshSession: vi.fn() },
+  };
+  return { supabase: mockSupabase, supabaseAuthClient: mockSupabaseAuthClient };
 });
 
 const { supabase } = await import("../lib/supabase.js");
 const { app } = await import("../app.js");
 
-const mockAuth = supabase.auth as { getUser: ReturnType<typeof vi.fn> };
+const mockAuth = supabase.auth as unknown as { getUser: ReturnType<typeof vi.fn> };
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
 const CURRENT_USER_ID = "user-abc";
@@ -48,7 +51,9 @@ describe("POST /couples/invite", () => {
         };
       }
       if (table === "invite_tokens") {
+        const deleteChain = { eq: vi.fn().mockReturnThis(), or: vi.fn().mockResolvedValue({ error: null }) };
         return {
+          delete: vi.fn().mockReturnValue(deleteChain),
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           is: vi.fn().mockReturnThis(),
@@ -89,7 +94,9 @@ describe("POST /couples/invite", () => {
         };
       }
       if (table === "invite_tokens") {
+        const deleteChain = { eq: vi.fn().mockReturnThis(), or: vi.fn().mockResolvedValue({ error: null }) };
         return {
+          delete: vi.fn().mockReturnValue(deleteChain),
           select: vi.fn().mockReturnThis(),
           eq: vi.fn().mockReturnThis(),
           is: vi.fn().mockReturnThis(),

@@ -21,6 +21,7 @@ export default function ProfilePage() {
     paired ? "my-profile" : "link-partner",
   );
   const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [tokenExpiresAt, setTokenExpiresAt] = useState<string | null>(null);
   const [tokenLoading, setTokenLoading] = useState(!paired);
   const [tokenError, setTokenError] = useState("");
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -29,11 +30,12 @@ export default function ProfilePage() {
     if (paired) return;
     async function fetchInviteToken() {
       const res = await apiFetch("/couples/invite", { method: "POST" });
-      const data = (await res.json()) as { token?: string; error?: string };
+      const data = (await res.json()) as { token?: string; expires_at?: string; error?: string };
       if (!res.ok) {
         setTokenError(data.error ?? "Failed to generate invite token");
       } else if (data.token) {
         setInviteToken(data.token);
+        setTokenExpiresAt(data.expires_at ?? null);
       }
       setTokenLoading(false);
     }
@@ -64,6 +66,7 @@ export default function ProfilePage() {
     setIsPaired(false);
     setPaired(false);
     setInviteToken(null);
+    setTokenExpiresAt(null);
     setTokenError("");
     setTokenLoading(true);
     setActiveTab("link-partner");
@@ -88,6 +91,7 @@ export default function ProfilePage() {
         <LinkPartnerTab
           paired={paired}
           inviteToken={inviteToken}
+          tokenExpiresAt={tokenExpiresAt}
           tokenLoading={tokenLoading}
           tokenError={tokenError}
           onUnlink={handleUnlink}

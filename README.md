@@ -28,19 +28,24 @@ This project is a monorepo containing a `client` and a `server` application. It 
    ```
    - `SUPABASE_URL` — found on the **Project Overview** homepage
    - `SUPABASE_SECRET_KEY` — found under **Project Settings → API Keys** (secret key)
+   - `SUPABASE_ANON_KEY` — found under **Project Settings → API Keys** (publishable key)
 
    **Client** (`client/.env`) — used for Supabase Realtime and E2E test auth:
    ```bash
    cp client/.env.example client/.env
    ```
-   - `VITE_SUPABASE_URL` — same project URL as above
-   - `VITE_SUPABASE_ANON_KEY` — found under **Project Settings → API Keys** (publishable key)
+   - `VITE_SUPABASE_URL` — same Supabase project URL as above
+   - `VITE_SUPABASE_ANON_KEY` — same Supabase project publishable key as above
 
 ## Database
 
 The schema, seed data, and E2E test helper function are all in `project-memory/database-setup.sql`.
 
-To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers the `delete_test_user()` cleanup function.
+To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers two functions:
+
+- `link_partners(user_a, user_b)` — atomically links two profiles and creates the `pairs` row in a single transaction; called by the Express backend via `supabase.rpc()`
+- `unlink_partners(user_a, partner)` — atomically unlinks two profiles, deletes the `pairs` row, and removes all shared connection requests (cascades to participants and messages); called by the Express backend via `supabase.rpc()`
+- `delete_test_user()` — E2E test cleanup (see below)
 
 ### E2E Test Cleanup
 
@@ -52,7 +57,7 @@ SELECT delete_test_user();
 
 The function only allows deletion of accounts whose email matches `test_e2e_%@example.com` and handles cascade cleanup of all associated data.
 
-> **Running the Express server** requires a `.env` with `SUPABASE_URL` and `SUPABASE_SECRET_KEY` from your Supabase project settings.
+> **Running the Express server** requires a `.env` with `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, and `SUPABASE_ANON_KEY` from your Supabase project settings.
 
 ## Development
 

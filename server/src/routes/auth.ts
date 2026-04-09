@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { supabase } from "../lib/supabase.js";
+import { supabase, supabaseAuthClient } from "../lib/supabase.js";
 import { verifyToken } from "../middleware/auth.js";
 
 export const authRouter = Router();
@@ -30,7 +30,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: true, // bypasses email verification
     });
 
   if (createError) {
@@ -49,13 +49,19 @@ authRouter.post("/register", async (req: Request, res: Response) => {
 
   const user = createData.user;
 
-  await supabase.from("profiles").insert({
+  const { error: profileError } = await supabase.from("profiles").insert({
     id: user.id,
     display_name: displayName,
   });
 
+  if (profileError) {
+    await supabase.auth.admin.deleteUser(user.id);
+    res.status(500).json({ error: "Registration failed. Please try again." });
+    return;
+  }
+
   const { data: signInData, error: signInError } =
-    await supabase.auth.signInWithPassword({ email, password });
+    await supabaseAuthClient.auth.signInWithPassword({ email, password });
 
   if (signInError || !signInData.session) {
     res.status(500).json({ error: "Account created but failed to sign in" });
@@ -82,7 +88,7 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     return;
   }
 
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabaseAuthClient.auth.signInWithPassword({
     email,
     password,
   });
@@ -118,6 +124,16 @@ authRouter.post("/logout", verifyToken, async (req: Request, res: Response) => {
   res.status(204).send();
 });
 
+authRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
+  const user = res.locals["user"] as { id: string };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("partner_id")
+    .eq("id", user.id)
+    .single();
+  res.status(200).json({ partnerId: profile?.partner_id ?? null });
+});
+
 authRouter.post("/refresh", async (req: Request, res: Response) => {
   const { refresh_token } = req.body as { refresh_token?: string };
 
@@ -126,7 +142,9 @@ authRouter.post("/refresh", async (req: Request, res: Response) => {
     return;
   }
 
-  const { data, error } = await supabase.auth.refreshSession({ refresh_token });
+  const { data, error } = await supabaseAuthClient.auth.refreshSession({
+    refresh_token,
+  });
 
   if (error || !data.session) {
     res.status(401).json({ error: "Session expired. Please log in again." });

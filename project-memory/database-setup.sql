@@ -162,6 +162,58 @@ CREATE INDEX idx_messages_sender_id  ON public.messages(sender_id);
 ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
 
 -- ----------------------------------------------------------------
+-- link_partners
+-- Atomically links two profiles and creates the pairs row.
+-- Called from the Express backend via supabase.rpc().
+-- Runs as SECURITY INVOKER (service role caller bypasses RLS).
+-- ----------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.link_partners(user_a uuid, user_b uuid)
+RETURNS void AS $$
+BEGIN
+  UPDATE public.profiles SET partner_id = user_b WHERE id = user_a;
+  UPDATE public.profiles SET partner_id = user_a WHERE id = user_b;
+  INSERT INTO public.pairs (profile_id_1, profile_id_2) VALUES (user_b, user_a);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ----------------------------------------------------------------
+-- unlink_partners
+-- Atomically unlinks two profiles, deletes the pairs row, and removes
+-- all shared connection requests (cascades to participants + messages).
+-- Called from the Express backend via supabase.rpc().
+-- ----------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.unlink_partners(user_a uuid, partner uuid)
+RETURNS void AS $$
+BEGIN
+  -- Each connection_request has exactly 4 rows in connection_request_participants
+  -- (one per user across both couples). Finding request_ids where either
+  -- unlinking user appears as a participant catches all shared requests,
+  -- regardless of which couple slot they occupy. Uses idx_conn_participants_user_id
+  -- for an efficient single index scan instead of OR-ing across four columns
+  -- on connection_requests. Deletion cascades to connection_request_participants
+  -- and messages via ON DELETE CASCADE.
+  DELETE FROM public.connection_requests
+    WHERE id IN (
+      SELECT request_id FROM public.connection_request_participants
+      WHERE user_id IN (user_a, partner)
+    );
+
+  -- Delete all invite tokens for both users so that after unlinking, each user
+  -- gets a fresh 72-hour token on their next visit rather than an old token
+  -- with reduced time remaining.
+  DELETE FROM public.invite_tokens
+    WHERE created_by IN (user_a, partner);
+
+  UPDATE public.profiles SET partner_id = NULL WHERE id = user_a;
+  UPDATE public.profiles SET partner_id = NULL WHERE id = partner;
+
+  DELETE FROM public.pairs
+    WHERE (profile_id_1 = user_a AND profile_id_2 = partner)
+       OR (profile_id_1 = partner AND profile_id_2 = user_a);
+END;
+$$ LANGUAGE plpgsql;
+
+-- ----------------------------------------------------------------
 -- Seed — preset interest tags
 -- ----------------------------------------------------------------
 INSERT INTO public.tags (label, is_custom) VALUES

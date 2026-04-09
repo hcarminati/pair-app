@@ -1,50 +1,116 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../lib/api";
 import { setIsPaired } from "../../lib/authStore";
 
-function generateToken(): string {
-  const seg = () =>
-    Math.floor(Math.random() * 0xffff)
-      .toString(16)
-      .padStart(4, "0");
-  return `${seg()}-${seg()}-${seg()}`;
+interface LinkPartnerTabProps {
+  paired: boolean;
+  inviteToken: string | null;
+  tokenExpiresAt: string | null;
+  tokenLoading: boolean;
+  tokenError: string;
+  onUnlink: () => Promise<void>;
 }
 
-export function LinkPartnerTab() {
+function formatExpiry(expiresAt: string): string {
+  const msLeft = new Date(expiresAt).getTime() - Date.now();
+  const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
+  const minutesLeft = Math.floor(msLeft / (1000 * 60));
+  if (hoursLeft >= 1) {
+    return `Expires in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}`;
+  }
+  if (minutesLeft >= 1) {
+    return `Expires in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}`;
+  }
+  return "Expiring soon";
+}
+
+export function LinkPartnerTab({
+  paired,
+  inviteToken,
+  tokenExpiresAt,
+  tokenLoading,
+  tokenError,
+  onUnlink,
+}: LinkPartnerTabProps) {
   const navigate = useNavigate();
-  const [myToken] = useState(generateToken);
   const [partnerToken, setPartnerToken] = useState("");
   const [copied, setCopied] = useState(false);
   const [linkError, setLinkError] = useState("");
+  const [linking, setLinking] = useState(false);
+  const [unlinking, setUnlinking] = useState(false);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(myToken);
+    if (!inviteToken) return;
+    await navigator.clipboard.writeText(inviteToken);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handleLinkSubmit(e: React.FormEvent) {
+  async function handleLinkSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!partnerToken.trim()) {
       setLinkError("Partner token is required");
       return;
     }
     setLinkError("");
-    // TODO: call POST /auth/link-partner
-    console.log("link partner", { partnerToken });
+    setLinking(true);
+    const res = await apiFetch("/couples/link", {
+      method: "POST",
+      body: JSON.stringify({ token: partnerToken.trim() }),
+    });
+    if (!res.ok) {
+      const data = (await res.json()) as { error?: string };
+      setLinkError(data.error ?? "Failed to link accounts. Please try again.");
+      setLinking(false);
+      return;
+    }
     setIsPaired(true);
     navigate("/");
+  }
+
+  async function handleUnlink() {
+    setUnlinking(true);
+    await onUnlink();
+    setUnlinking(false);
+  }
+
+  if (paired) {
+    return (
+      <div className="profile-tab-pane">
+        <p className="token-hint">You are linked with your partner.</p>
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleUnlink}
+          disabled={unlinking}
+        >
+          {unlinking ? "Unlinking…" : "Unlink partner"}
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="profile-tab-pane">
       <section>
         <h2 className="onboarding-section-title">Your invite token</h2>
-        <div className="token-box">{myToken}</div>
-        <button type="button" className="copy-link" onClick={handleCopy}>
-          {copied ? "Copied!" : "Copy link"}
-        </button>
-        <p className="token-hint">Expires in 72 hours · single use</p>
+        {tokenLoading && <p className="token-hint">Generating your token…</p>}
+        {tokenError && <p className="form-error">{tokenError}</p>}
+        {inviteToken && (
+          <>
+            <div className="token-box">{inviteToken}</div>
+            <button type="button" className="copy-link" onClick={handleCopy}>
+              {copied ? "Copied!" : "Copy link"}
+            </button>
+            <p className="token-hint">
+              {tokenExpiresAt
+                ? formatExpiry(tokenExpiresAt)
+                : "Expires in 72 hours"}{" "}
+              · single use
+            </p>
+          </>
+        )}
       </section>
 
       <div className="onboarding-divider">
@@ -61,8 +127,12 @@ export function LinkPartnerTab() {
           value={partnerToken}
           onChange={(e) => setPartnerToken(e.target.value)}
         />
-        <button type="submit" className="btn-primary onboarding-submit">
-          Link accounts
+        <button
+          type="submit"
+          className="btn-primary onboarding-submit"
+          disabled={linking}
+        >
+          {linking ? "Linking…" : "Link accounts"}
         </button>
       </form>
     </div>

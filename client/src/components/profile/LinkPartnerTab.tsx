@@ -16,8 +16,12 @@ function formatExpiry(expiresAt: string): string {
   const msLeft = new Date(expiresAt).getTime() - Date.now();
   const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
   const minutesLeft = Math.floor(msLeft / (1000 * 60));
-  if (hoursLeft >= 1) return `Expires in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}`;
-  if (minutesLeft >= 1) return `Expires in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}`;
+  if (hoursLeft >= 1) {
+    return `Expires in ${hoursLeft} hour${hoursLeft === 1 ? "" : "s"}`;
+  }
+  if (minutesLeft >= 1) {
+    return `Expires in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}`;
+  }
   return "Expiring soon";
 }
 
@@ -99,7 +103,12 @@ export function LinkPartnerTab({
             <button type="button" className="copy-link" onClick={handleCopy}>
               {copied ? "Copied!" : "Copy link"}
             </button>
-            <p className="token-hint">{tokenExpiresAt ? formatExpiry(tokenExpiresAt) : "Expires in 72 hours"} · single use</p>
+            <p className="token-hint">
+              {tokenExpiresAt
+                ? formatExpiry(tokenExpiresAt)
+                : "Expires in 72 hours"}{" "}
+              · single use
+            </p>
           </>
         )}
       </section>

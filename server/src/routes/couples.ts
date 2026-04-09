@@ -23,9 +23,7 @@ couplesRouter.post(
     }
 
     if (profile.partner_id != null) {
-      res
-        .status(400)
-        .json({ error: "You are already paired with a partner" });
+      res.status(400).json({ error: "You are already paired with a partner" });
       return;
     }
 
@@ -48,14 +46,14 @@ couplesRouter.post(
       .single();
 
     if (existing) {
-      res.status(200).json({ token: existing.token, expires_at: existing.expires_at });
+      res
+        .status(200)
+        .json({ token: existing.token, expires_at: existing.expires_at });
       return;
     }
 
     const token = crypto.randomUUID();
-    const expiresAt = new Date(
-      Date.now() + 72 * 60 * 60 * 1000,
-    ).toISOString();
+    const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
 
     const { error } = await supabase.from("invite_tokens").insert({
       token,
@@ -129,7 +127,10 @@ couplesRouter.post(
       .eq("id", tokenRow.id);
 
     if (markUsedError) {
-      console.error("link error (mark token used):", JSON.stringify(markUsedError));
+      console.error(
+        "link error (mark token used):",
+        JSON.stringify(markUsedError),
+      );
       res.status(500).json({ error: "Failed to link accounts" });
       return;
     }

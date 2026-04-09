@@ -142,7 +142,9 @@ authRouter.post("/refresh", async (req: Request, res: Response) => {
     return;
   }
 
-  const { data, error } = await supabaseAuthClient.auth.refreshSession({ refresh_token });
+  const { data, error } = await supabaseAuthClient.auth.refreshSession({
+    refresh_token,
+  });
 
   if (error || !data.session) {
     res.status(401).json({ error: "Session expired. Please log in again." });

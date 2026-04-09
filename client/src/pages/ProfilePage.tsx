@@ -30,7 +30,11 @@ export default function ProfilePage() {
     if (paired) return;
     async function fetchInviteToken() {
       const res = await apiFetch("/couples/invite", { method: "POST" });
-      const data = (await res.json()) as { token?: string; expires_at?: string; error?: string };
+      const data = (await res.json()) as {
+        token?: string;
+        expires_at?: string;
+        error?: string;
+      };
       if (!res.ok) {
         setTokenError(data.error ?? "Failed to generate invite token");
       } else if (data.token) {

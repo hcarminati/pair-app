@@ -16,7 +16,9 @@ vi.mock("../lib/supabase.js", () => {
 const { supabase } = await import("../lib/supabase.js");
 const { app } = await import("../app.js");
 
-const mockAuth = supabase.auth as unknown as { getUser: ReturnType<typeof vi.fn> };
+const mockAuth = supabase.auth as unknown as {
+  getUser: ReturnType<typeof vi.fn>;
+};
 const mockFrom = supabase.from as ReturnType<typeof vi.fn>;
 
 const CURRENT_USER_ID = "user-abc";
@@ -52,7 +54,10 @@ describe("POST /couples/invite", () => {
         };
       }
       if (table === "invite_tokens") {
-        const deleteChain = { eq: vi.fn().mockReturnThis(), or: vi.fn().mockResolvedValue({ error: null }) };
+        const deleteChain = {
+          eq: vi.fn().mockReturnThis(),
+          or: vi.fn().mockResolvedValue({ error: null }),
+        };
         return {
           delete: vi.fn().mockReturnValue(deleteChain),
           select: vi.fn().mockReturnThis(),
@@ -61,7 +66,9 @@ describe("POST /couples/invite", () => {
           gt: vi.fn().mockReturnThis(),
           order: vi.fn().mockReturnThis(),
           limit: vi.fn().mockReturnThis(),
-          single: vi.fn().mockResolvedValue({ data: null, error: { code: "PGRST116" } }),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: null, error: { code: "PGRST116" } }),
           insert: vi.fn().mockResolvedValue({ error: null }),
         };
       }
@@ -95,7 +102,10 @@ describe("POST /couples/invite", () => {
         };
       }
       if (table === "invite_tokens") {
-        const deleteChain = { eq: vi.fn().mockReturnThis(), or: vi.fn().mockResolvedValue({ error: null }) };
+        const deleteChain = {
+          eq: vi.fn().mockReturnThis(),
+          or: vi.fn().mockResolvedValue({ error: null }),
+        };
         return {
           delete: vi.fn().mockReturnValue(deleteChain),
           select: vi.fn().mockReturnThis(),
@@ -173,7 +183,9 @@ describe("POST /couples/link", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({ data: tokenData, error: null }),
+              single: vi
+                .fn()
+                .mockResolvedValue({ data: tokenData, error: null }),
             }),
           }),
           update: vi.fn().mockReturnValue({ eq: updateEq }),
@@ -193,7 +205,9 @@ describe("POST /couples/link", () => {
       }
     });
 
-    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
+      error: null,
+    });
   }
 
   it("returns 200 and links accounts on valid token", async () => {
@@ -322,7 +336,9 @@ describe("POST /couples/link", () => {
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: "Not found" } }),
+          single: vi
+            .fn()
+            .mockResolvedValue({ data: null, error: { message: "Not found" } }),
         }),
       }),
     });
@@ -376,7 +392,9 @@ describe("DELETE /couples/link", () => {
         }),
       }),
     });
-    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({
+      error: null,
+    });
 
     const res = await request(app)
       .delete("/couples/link")

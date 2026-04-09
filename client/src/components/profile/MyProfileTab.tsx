@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { clearTokens } from "../../lib/authStore";
-import { logout } from "../../lib/api";
+import { logout, apiFetch } from "../../lib/api";
 
 const PRESET_INTERESTS = [
   "hiking",
@@ -17,14 +17,55 @@ const PRESET_INTERESTS = [
 ];
 const MAX_INTERESTS = 10;
 
+interface ProfileData {
+  display_name: string;
+  about_me: string | null;
+  location: string | null;
+  email: string | null;
+  tags: string[];
+}
+
 export function MyProfileTab() {
   const navigate = useNavigate();
+
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
+  const [location, setLocation] = useState("");
   const [tags, setTags] = useState<string[]>(PRESET_INTERESTS);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customTag, setCustomTag] = useState("");
-  const [aboutMe, setAboutMe] = useState("");
-  const [location, setLocation] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
+
+  useEffect(() => {
+    async function fetchProfile() {
+      const res = await apiFetch("/profiles/me");
+      if (!res.ok) {
+        setLoadingProfile(false);
+        return;
+      }
+      const data = (await res.json()) as ProfileData;
+      setDisplayName(data.display_name);
+      setEmail(data.email ?? "");
+      setAboutMe(data.about_me ?? "");
+      setLocation(data.location ?? "");
+
+      // Merge user's custom tags into the tag list
+      const userTags = data.tags;
+      const merged = [
+        ...PRESET_INTERESTS,
+        ...userTags.filter((t) => !PRESET_INTERESTS.includes(t)),
+      ];
+      setTags(merged);
+      setSelected(new Set(userTags));
+      setLoadingProfile(false);
+    }
+    void fetchProfile();
+  }, []);
 
   function toggleTag(tag: string) {
     setSelected((prev) => {
@@ -49,16 +90,47 @@ export function MyProfileTab() {
     setCustomTag("");
   }
 
-  function handleSave() {
-    // TODO: PATCH /profiles/me
-    console.log("save profile", { selected: [...selected], aboutMe, location });
+  async function handleSave() {
+    setSaving(true);
+    setSaveSuccess(false);
+    setSaveError("");
+
+    const res = await apiFetch("/profiles/me", {
+      method: "PATCH",
+      body: JSON.stringify({
+        display_name: displayName,
+        about_me: aboutMe,
+        location,
+        tags: [...selected],
+      }),
+    });
+
+    setSaving(false);
+
+    if (res.ok) {
+      setSaveSuccess(true);
+    } else {
+      const data = (await res.json()) as { error?: string };
+      setSaveError(data.error ?? "Failed to save profile");
+    }
+  }
+
+  const initials = displayName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  if (loadingProfile) {
+    return <div className="profile-tab-pane">Loading profile…</div>;
   }
 
   return (
     <div className="profile-tab-pane">
       <div className="profile-user-header">
-        <div className="profile-avatar">KO</div>
-        <p className="profile-display-name">Kim O.</p>
+        <div className="profile-avatar">{initials || "?"}</div>
+        <p className="profile-display-name">{displayName}</p>
       </div>
 
       <div className="form-row">
@@ -68,7 +140,8 @@ export function MyProfileTab() {
             id="displayName"
             type="text"
             placeholder="Enter your name"
-            readOnly
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
           />
         </div>
         <div className="form-field">
@@ -76,7 +149,7 @@ export function MyProfileTab() {
           <input
             id="profileEmail"
             type="email"
-            placeholder="you@example.com"
+            value={email}
             readOnly
           />
         </div>
@@ -85,16 +158,21 @@ export function MyProfileTab() {
       <div className="form-field">
         <label>Interests</label>
         <div className="interest-tags">
-          {tags.map((tag) => (
-            <button
-              key={tag}
-              type="button"
-              onClick={() => toggleTag(tag)}
-              className={`tag${selected.has(tag) ? " tag--selected" : ""}`}
-            >
-              {tag}
-            </button>
-          ))}
+          {tags.map((tag) => {
+            const isSelected = selected.has(tag);
+            const isDisabled = !isSelected && selected.size >= MAX_INTERESTS;
+            return (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => toggleTag(tag)}
+                disabled={isDisabled}
+                className={`tag${isSelected ? " tag--selected" : ""}`}
+              >
+                {tag}
+              </button>
+            );
+          })}
         </div>
         <div className="custom-tag-row">
           <input
@@ -145,8 +223,18 @@ export function MyProfileTab() {
         />
       </div>
 
-      <button type="button" className="btn-primary" onClick={handleSave}>
-        Save profile
+      {saveSuccess && (
+        <p className="form-success">Profile saved successfully.</p>
+      )}
+      {saveError && <p className="form-error">{saveError}</p>}
+
+      <button
+        type="button"
+        className="btn-primary"
+        onClick={() => void handleSave()}
+        disabled={saving}
+      >
+        {saving ? "Saving…" : "Save profile"}
       </button>
       <button
         type="button"

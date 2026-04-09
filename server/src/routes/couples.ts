@@ -17,12 +17,24 @@ couplesRouter.post(
       .eq("id", user.id)
       .single();
 
-    if (profile?.partner_id != null) {
+    if (!profile) {
+      res.status(404).json({ error: "Profile not found" });
+      return;
+    }
+
+    if (profile.partner_id != null) {
       res
         .status(400)
         .json({ error: "You are already paired with a partner" });
       return;
     }
+
+    // Delete any stale tokens (used or expired) for this user
+    await supabase
+      .from("invite_tokens")
+      .delete()
+      .eq("created_by", user.id)
+      .or(`used_by.not.is.null,expires_at.lt.${new Date().toISOString()}`);
 
     // Return an existing valid token if one exists
     const { data: existing } = await supabase

@@ -134,23 +134,13 @@ couplesRouter.post(
       return;
     }
 
-    const { error: linkSelfError } = await supabase
-      .from("profiles")
-      .update({ partner_id: tokenRow.created_by })
-      .eq("id", user.id);
-
-    const { error: linkCreatorError } = await supabase
-      .from("profiles")
-      .update({ partner_id: user.id })
-      .eq("id", tokenRow.created_by);
-
-    const { error: pairsError } = await supabase.from("pairs").insert({
-      profile_id_1: tokenRow.created_by,
-      profile_id_2: user.id,
+    const { error: linkError } = await supabase.rpc("link_partners", {
+      user_a: user.id,
+      user_b: tokenRow.created_by,
     });
 
-    if (linkSelfError || linkCreatorError || pairsError) {
-      console.error("link error:", JSON.stringify({ linkSelfError, linkCreatorError, pairsError }));
+    if (linkError) {
+      console.error("link error:", JSON.stringify(linkError));
       res.status(500).json({ error: "Failed to link accounts" });
       return;
     }

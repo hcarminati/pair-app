@@ -5,6 +5,7 @@ vi.mock("../lib/supabase.js", () => {
   const mockSupabase = {
     auth: { getUser: vi.fn() },
     from: vi.fn(),
+    rpc: vi.fn(),
   };
   const mockSupabaseAuthClient = {
     auth: { signInWithPassword: vi.fn(), refreshSession: vi.fn() },
@@ -188,13 +189,11 @@ describe("POST /couples/link", () => {
               }),
             }),
           }),
-          update: vi.fn().mockReturnValue({ eq: updateEq }),
         };
       }
-      if (table === "pairs") {
-        return { insert: vi.fn().mockResolvedValue({ error: null }) };
-      }
     });
+
+    (supabase.rpc as ReturnType<typeof vi.fn>).mockResolvedValue({ error: null });
   }
 
   it("returns 200 and links accounts on valid token", async () => {

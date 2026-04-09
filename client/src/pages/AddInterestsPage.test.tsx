@@ -1,8 +1,22 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import AddInterestsPage from "./AddInterestsPage";
+
+const mockNavigate = vi.fn();
+
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+vi.mock("../lib/api", () => ({
+  apiFetch: vi.fn(),
+}));
+
+const { apiFetch } = await import("../lib/api");
+const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>;
 
 function renderPage() {
   return render(
@@ -11,6 +25,10 @@ function renderPage() {
     </MemoryRouter>,
   );
 }
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe("AddInterestsPage", () => {
   it("renders the step indicator", () => {
@@ -71,6 +89,32 @@ describe("AddInterestsPage", () => {
     expect(screen.getByText("10 / 10 selected")).toBeInTheDocument();
   });
 
+  it("disables unselected tags when 10 are selected", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    // Select all 10 preset tags first
+    const presets = [
+      "hiking",
+      "board games",
+      "cooking",
+      "films",
+      "cycling",
+      "travel",
+      "yoga",
+      "trivia",
+      "wine",
+      "running",
+    ];
+    for (const tag of presets) {
+      await user.click(screen.getByRole("button", { name: tag }));
+    }
+    expect(screen.getByText("10 / 10 selected")).toBeInTheDocument();
+    // Adding a custom tag at the limit does not auto-select it, so it should be disabled
+    await user.type(screen.getByPlaceholderText(/add custom tag/i), "pottery");
+    await user.click(screen.getByRole("button", { name: /^add$/i }));
+    expect(screen.getByRole("button", { name: "pottery" })).toBeDisabled();
+  });
+
   it("adds a custom tag and auto-selects it", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -113,5 +157,59 @@ describe("AddInterestsPage", () => {
     expect(
       screen.getByRole("button", { name: /save & continue/i }),
     ).toBeInTheDocument();
+  });
+
+  it("navigates directly to /profile when no tags are selected", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/profile");
+    expect(mockApiFetch).not.toHaveBeenCalled();
+  });
+
+  it("calls PATCH /users/me/interests and navigates to /profile on success", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValue({
+      ok: true,
+      json: async () => ({ tags: ["hiking"] }),
+    } as Response);
+
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "hiking" }));
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+
+    expect(mockApiFetch).toHaveBeenCalledWith("/users/me/interests", {
+      method: "PATCH",
+      body: JSON.stringify({ tags: ["hiking"] }),
+    });
+    expect(mockNavigate).toHaveBeenCalledWith("/profile");
+  });
+
+  it("shows inline error and does not navigate on API failure", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: "Failed to save interests" }),
+    } as Response);
+
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "hiking" }));
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+
+    expect(
+      await screen.findByText(/failed to save interests/i),
+    ).toBeInTheDocument();
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("shows loading state on submit button while request is in flight", async () => {
+    const user = userEvent.setup();
+    mockApiFetch.mockImplementation(() => new Promise(() => {})); // never resolves
+
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "hiking" }));
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+
+    expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
   });
 });

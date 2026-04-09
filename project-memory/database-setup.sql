@@ -198,6 +198,12 @@ BEGIN
       WHERE user_id IN (user_a, partner)
     );
 
+  -- Delete all invite tokens for both users so that after unlinking, each user
+  -- gets a fresh 72-hour token on their next visit rather than an old token
+  -- with reduced time remaining.
+  DELETE FROM public.invite_tokens
+    WHERE created_by IN (user_a, partner);
+
   UPDATE public.profiles SET partner_id = NULL WHERE id = user_a;
   UPDATE public.profiles SET partner_id = NULL WHERE id = partner;
 

@@ -57,6 +57,8 @@ authRouter.post("/register", async (req: Request, res: Response) => {
   const { data: signInData, error: signInError } =
     await supabase.auth.signInWithPassword({ email, password });
 
+    await supabase.auth.signOut ({ scope: "local" }) ;
+
   if (signInError || !signInData.session) {
     res.status(500).json({ error: "Account created but failed to sign in" });
     return;
@@ -116,6 +118,16 @@ authRouter.post("/logout", verifyToken, async (req: Request, res: Response) => {
     return;
   }
   res.status(204).send();
+});
+
+authRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
+  const user = res.locals["user"] as { id: string };
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("partner_id")
+    .eq("id", user.id)
+    .single();
+  res.status(200).json({ partnerId: profile?.partner_id ?? null });
 });
 
 authRouter.post("/refresh", async (req: Request, res: Response) => {

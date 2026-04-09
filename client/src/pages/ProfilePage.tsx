@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { getIsPaired } from "../lib/authStore";
+import { useState, useEffect, useRef } from "react";
+import { getIsPaired, setIsPaired } from "../lib/authStore";
+import { apiFetch } from "../lib/api";
+import { useNavigate } from "react-router-dom";
 import { MyProfileTab } from "../components/profile/MyProfileTab";
 import { LinkPartnerTab } from "../components/profile/LinkPartnerTab";
 import { CouplePreviewTab } from "../components/profile/CouplePreviewTab";
@@ -13,10 +15,59 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function ProfilePage() {
-  const isPaired = getIsPaired();
+  const navigate = useNavigate();
+  const [paired, setPaired] = useState(getIsPaired());
   const [activeTab, setActiveTab] = useState<Tab>(
-    isPaired ? "my-profile" : "link-partner",
+    paired ? "my-profile" : "link-partner",
   );
+  const [inviteToken, setInviteToken] = useState<string | null>(null);
+  const [tokenLoading, setTokenLoading] = useState(!paired);
+  const [tokenError, setTokenError] = useState("");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (paired) return;
+    async function fetchInviteToken() {
+      const res = await apiFetch("/couples/invite", { method: "POST" });
+      const data = (await res.json()) as { token?: string; error?: string };
+      if (!res.ok) {
+        setTokenError(data.error ?? "Failed to generate invite token");
+      } else if (data.token) {
+        setInviteToken(data.token);
+      }
+      setTokenLoading(false);
+    }
+    void fetchInviteToken();
+  }, [paired]);
+
+  // Poll so the token creator gets navigated to / when the other person links
+  useEffect(() => {
+    if (paired) return;
+    pollRef.current = setInterval(async () => {
+      const res = await apiFetch("/auth/me");
+      if (!res.ok) return;
+      const data = (await res.json()) as { partnerId: string | null };
+      if (data.partnerId) {
+        clearInterval(pollRef.current!);
+        setIsPaired(true);
+        navigate("/");
+      }
+    }, 3000);
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [paired, navigate]);
+
+  async function handleUnlink() {
+    const res = await apiFetch("/couples/link", { method: "DELETE" });
+    if (!res.ok) return;
+    setIsPaired(false);
+    setPaired(false);
+    setInviteToken(null);
+    setTokenError("");
+    setTokenLoading(true);
+    setActiveTab("link-partner");
+  }
 
   return (
     <div className="profile-page">
@@ -33,7 +84,15 @@ export default function ProfilePage() {
         ))}
       </div>
       {activeTab === "my-profile" && <MyProfileTab />}
-      {activeTab === "link-partner" && <LinkPartnerTab />}
+      {activeTab === "link-partner" && (
+        <LinkPartnerTab
+          paired={paired}
+          inviteToken={inviteToken}
+          tokenLoading={tokenLoading}
+          tokenError={tokenError}
+          onUnlink={handleUnlink}
+        />
+      )}
       {activeTab === "couple-preview" && <CouplePreviewTab />}
     </div>
   );

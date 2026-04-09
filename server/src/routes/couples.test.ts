@@ -32,7 +32,7 @@ beforeEach(() => {
 // ─── POST /couples/invite ─────────────────────────────────────────────────────
 
 describe("POST /couples/invite", () => {
-  it("returns 201 with a plaintext token when user is not yet paired", async () => {
+  it("returns 201 with a new token when user has no existing valid token", async () => {
     mockAuthenticatedUser();
     mockFrom.mockImplementation((table: string) => {
       if (table === "profiles") {
@@ -48,7 +48,16 @@ describe("POST /couples/invite", () => {
         };
       }
       if (table === "invite_tokens") {
-        return { insert: vi.fn().mockResolvedValue({ error: null }) };
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          gt: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({ data: null, error: { code: "PGRST116" } }),
+          insert: vi.fn().mockResolvedValue({ error: null }),
+        };
       }
     });
 
@@ -60,6 +69,48 @@ describe("POST /couples/invite", () => {
     expect(res.body).toHaveProperty("token");
     expect(res.body).toHaveProperty("expires_at");
     expect(typeof res.body.token).toBe("string");
+  });
+
+  it("returns 200 with existing token when user already has a valid one", async () => {
+    mockAuthenticatedUser();
+    const existingToken = "existing-token-uuid";
+    const existingExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { partner_id: null },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "invite_tokens") {
+        return {
+          select: vi.fn().mockReturnThis(),
+          eq: vi.fn().mockReturnThis(),
+          is: vi.fn().mockReturnThis(),
+          gt: vi.fn().mockReturnThis(),
+          order: vi.fn().mockReturnThis(),
+          limit: vi.fn().mockReturnThis(),
+          single: vi.fn().mockResolvedValue({
+            data: { token: existingToken, expires_at: existingExpiry },
+            error: null,
+          }),
+        };
+      }
+    });
+
+    const res = await request(app)
+      .post("/couples/invite")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body.token).toBe(existingToken);
+    expect(res.body.expires_at).toBe(existingExpiry);
   });
 
   it("returns 400 when user is already paired", async () => {

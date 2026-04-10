@@ -463,3 +463,261 @@ describe("DELETE /couples/link", () => {
     expect(res.status).toBe(401);
   });
 });
+
+// ─── GET /couples/me ──────────────────────────────────────────────────────────
+
+describe("GET /couples/me", () => {
+  const PAIR_DATA = {
+    id: "pair-id-1",
+    profile_id_1: CURRENT_USER_ID,
+    profile_id_2: OTHER_USER_ID,
+    about_us: "We love hiking",
+    location: "Portland, OR",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-01-01T00:00:00Z",
+  };
+
+  function mockPairedUser() {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { partner_id: OTHER_USER_ID },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "pairs") {
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              single: vi
+                .fn()
+                .mockResolvedValue({ data: PAIR_DATA, error: null }),
+            }),
+          }),
+        };
+      }
+    });
+  }
+
+  it("returns 200 with pair data when user is paired", async () => {
+    mockAuthenticatedUser();
+    mockPairedUser();
+
+    const res = await request(app)
+      .get("/couples/me")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body.id).toBe("pair-id-1");
+    expect(res.body.about_us).toBe("We love hiking");
+    expect(res.body.location).toBe("Portland, OR");
+  });
+
+  it("returns 400 when user is not paired", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { partner_id: null },
+            error: null,
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app)
+      .get("/couples/me")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not currently paired/i);
+  });
+
+  it("returns 404 when pair row is not found", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { partner_id: OTHER_USER_ID },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "pairs") {
+        return {
+          select: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: "Not found" },
+              }),
+            }),
+          }),
+        };
+      }
+    });
+
+    const res = await request(app)
+      .get("/couples/me")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toMatch(/not found/i);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Not authenticated" },
+    });
+
+    const res = await request(app).get("/couples/me");
+
+    expect(res.status).toBe(401);
+  });
+});
+
+// ─── PATCH /couples/me ────────────────────────────────────────────────────────
+
+describe("PATCH /couples/me", () => {
+  const UPDATED_PAIR = {
+    id: "pair-id-1",
+    profile_id_1: CURRENT_USER_ID,
+    profile_id_2: OTHER_USER_ID,
+    about_us: "We love hiking and cooking",
+    location: "Seattle, WA",
+    created_at: "2024-01-01T00:00:00Z",
+    updated_at: "2024-06-01T00:00:00Z",
+  };
+
+  function mockPairedUserWithUpdate(
+    pairResult: { data: unknown; error: unknown } = {
+      data: UPDATED_PAIR,
+      error: null,
+    },
+  ) {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === "profiles") {
+        return {
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              single: vi.fn().mockResolvedValue({
+                data: { partner_id: OTHER_USER_ID },
+                error: null,
+              }),
+            }),
+          }),
+        };
+      }
+      if (table === "pairs") {
+        return {
+          update: vi.fn().mockReturnValue({
+            or: vi.fn().mockReturnValue({
+              select: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue(pairResult),
+              }),
+            }),
+          }),
+        };
+      }
+    });
+  }
+
+  it("returns 200 with updated pair on successful update", async () => {
+    mockAuthenticatedUser();
+    mockPairedUserWithUpdate();
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ about_us: "We love hiking and cooking", location: "Seattle, WA" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.about_us).toBe("We love hiking and cooking");
+    expect(res.body.location).toBe("Seattle, WA");
+  });
+
+  it("returns 200 when only about_us is provided", async () => {
+    mockAuthenticatedUser();
+    mockPairedUserWithUpdate();
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ about_us: "We love hiking and cooking" });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 200 when only location is provided", async () => {
+    mockAuthenticatedUser();
+    mockPairedUserWithUpdate();
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ location: "Seattle, WA" });
+
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 400 when user is not paired", async () => {
+    mockAuthenticatedUser();
+    mockFrom.mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { partner_id: null },
+            error: null,
+          }),
+        }),
+      }),
+    });
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ about_us: "Hello" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/not currently paired/i);
+  });
+
+  it("returns 500 when the database update fails", async () => {
+    mockAuthenticatedUser();
+    mockPairedUserWithUpdate({ data: null, error: { message: "DB error" } });
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .set("Authorization", "Bearer valid-jwt")
+      .send({ about_us: "Hello" });
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toMatch(/failed to update/i);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Not authenticated" },
+    });
+
+    const res = await request(app)
+      .patch("/couples/me")
+      .send({ about_us: "Hello" });
+
+    expect(res.status).toBe(401);
+  });
+});

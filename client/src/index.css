@@ -850,7 +850,6 @@ code {
 .pill {
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 14px;
   border: 1px solid #e0e0e0;
   background: #fff;
   color: #000;
@@ -858,6 +857,7 @@ code {
   transition: border-color 0.15s, background 0.15s, color 0.15s;
   font: inherit;
   font-size: 14px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
 }
@@ -899,6 +899,14 @@ code {
 
 .couple-card:hover {
   border-color: #000;
+}
+
+.couple-card--static {
+  cursor: default;
+}
+
+.couple-card--static:hover {
+  border-color: #e0e0e0;
 }
 
 .couple-card-header {
@@ -1080,6 +1088,13 @@ code {
 
 .discovery-modal-section {
   margin-bottom: 24px;
+}
+
+.discovery-modal-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0 0 12px;
 }
 
 .discovery-modal-common {

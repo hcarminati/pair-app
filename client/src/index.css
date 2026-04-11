@@ -227,6 +227,55 @@ body {
   cursor: not-allowed;
 }
 
+.btn--danger {
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #c0392b;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn--danger:hover {
+  background: #a93226;
+}
+
+.btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.unlink-confirm {
+  background: #fff8f8;
+  border: 1px solid #f5c6c6;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unlink-confirm-warning {
+  font-size: 14px;
+  color: #c0392b;
+  font-weight: 600;
+  margin: 0;
+}
+
+.unlink-confirm-detail {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.unlink-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .btn-primary-inner {
   display: flex;
   align-items: center;

@@ -39,6 +39,7 @@ export function LinkPartnerTab({
   const [linkError, setLinkError] = useState("");
   const [linking, setLinking] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
+  const [confirmingUnlink, setConfirmingUnlink] = useState(false);
 
   async function handleCopy() {
     if (!inviteToken) return;
@@ -79,14 +80,41 @@ export function LinkPartnerTab({
     return (
       <div className="profile-tab-pane">
         <p className="token-hint">You are linked with your partner.</p>
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={handleUnlink}
-          disabled={unlinking}
-        >
-          {unlinking ? "Unlinking…" : "Unlink partner"}
-        </button>
+        {confirmingUnlink ? (
+          <div className="unlink-confirm">
+            <p className="unlink-confirm-warning">Are you sure you want to unlink?</p>
+            <p className="unlink-confirm-detail">
+              Your partner's account will be suspended and all shared connection
+              requests and messages will be permanently deleted.
+            </p>
+            <div className="unlink-confirm-actions">
+              <button
+                type="button"
+                className="btn-outlined"
+                onClick={() => setConfirmingUnlink(false)}
+                disabled={unlinking}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn--danger"
+                onClick={handleUnlink}
+                disabled={unlinking}
+              >
+                {unlinking ? "Unlinking…" : "Yes, unlink"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => setConfirmingUnlink(true)}
+          >
+            Unlink partner
+          </button>
+        )}
       </div>
     );
   }

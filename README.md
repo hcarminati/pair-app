@@ -1,6 +1,7 @@
 # pair-app
 
 [![CI](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml)
+[![Playwright E2E Tests](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml)
 
 This project is a monorepo containing a `client` and a `server` application. It uses npm workspaces to manage dependencies across both projects.
 
@@ -105,3 +106,39 @@ You can run the development servers from the root directory:
   ```bash
   npm run test:server
   ```
+
+### E2E Tests (Playwright)
+
+E2E tests require both the client and server to be running. The test runner starts them automatically via `webServer` in `playwright.config.ts`, so you don't need to start them manually.
+
+Before running E2E tests, ensure `client/.env` has the following set:
+
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — required for all E2E tests
+- `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` — a pre-seeded Supabase user for the "valid login" test; if omitted that test is skipped
+
+- **Run E2E tests (headed — browser visible):**
+  ```bash
+  npm run test:e2e
+  ```
+- **Run E2E tests (headless — mirrors CI):**
+  ```bash
+  npm run test:e2e:headless
+  ```
+- **View the last test report:**
+  ```bash
+  npm run test:e2e:report
+  ```
+
+E2E tests create users with emails matching `test_e2e_%@example.com` and clean them up automatically via `afterAll` hooks using the `delete_test_user()` Supabase function.
+
+#### GitHub Actions secrets
+
+The E2E workflow (`.github/workflows/e2e.yml`) requires the following secrets set under **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase publishable (anon) key |
+| `SUPABASE_SECRET_KEY` | Supabase service role key (server only) |
+| `TEST_USER_EMAIL` | Pre-seeded test user email (optional — skips valid-login test if absent) |
+| `TEST_USER_PASSWORD` | Pre-seeded test user password (optional — skips valid-login test if absent) |

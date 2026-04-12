@@ -123,56 +123,6 @@ describe("GET /profiles/me", () => {
 // ─── PATCH /profiles/me ───────────────────────────────────────────────────────
 
 describe("PATCH /profiles/me", () => {
-  function mockSuccessfulPatch(existingTagIds: Record<string, string> = {}) {
-    mockFrom.mockImplementation((table: string) => {
-      if (table === "profiles") {
-        return {
-          update: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          }),
-        };
-      }
-      if (table === "user_tags") {
-        return {
-          delete: vi.fn().mockReturnValue({
-            eq: vi.fn().mockResolvedValue({ error: null }),
-          }),
-          insert: vi.fn().mockResolvedValue({ error: null }),
-        };
-      }
-      if (table === "tags") {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
-              single: vi.fn().mockImplementation(() => {
-                // Return existing tag data or null
-                const labelArg = Object.keys(existingTagIds)[0];
-                if (labelArg && existingTagIds[labelArg]) {
-                  return Promise.resolve({
-                    data: { id: existingTagIds[labelArg] },
-                    error: null,
-                  });
-                }
-                return Promise.resolve({
-                  data: null,
-                  error: { code: "PGRST116" },
-                });
-              }),
-            }),
-          }),
-          insert: vi.fn().mockReturnValue({
-            select: vi.fn().mockReturnValue({
-              single: vi.fn().mockResolvedValue({
-                data: { id: "new-tag-id" },
-                error: null,
-              }),
-            }),
-          }),
-        };
-      }
-    });
-  }
-
   it("persists all fields atomically in a single request", async () => {
     mockAuthenticatedUser();
     let profileUpdateCalled = false;

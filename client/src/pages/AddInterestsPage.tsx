@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StepIndicator from "../components/StepIndicator";
+import { apiFetch } from "../lib/api";
 
 const STEPS = [{ label: "Account" }, { label: "Interests" }];
 
@@ -48,9 +49,11 @@ export default function AddInterestsPage() {
     setCustomTag("");
   }
 
-  function handleSubmit() {
-    // TODO: call PATCH /users/me/interests
-    console.log("interests", [...selected]);
+  async function handleSubmit() {
+    await apiFetch("/profiles/me", {
+      method: "PATCH",
+      body: JSON.stringify({ tags: [...selected] }),
+    });
     navigate("/profile");
   }
 
@@ -99,7 +102,7 @@ export default function AddInterestsPage() {
           {selected.size} / {MAX_INTERESTS} selected
         </p>
 
-        <button type="button" className="btn-primary" onClick={handleSubmit}>
+        <button type="button" className="btn-primary" onClick={() => void handleSubmit()}>
           Save & continue
         </button>
       </div>

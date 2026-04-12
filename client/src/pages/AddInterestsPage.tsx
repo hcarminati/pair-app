@@ -80,6 +80,11 @@ export default function AddInterestsPage() {
     } finally {
       setSubmitting(false);
     }
+    await apiFetch("/profiles/me", {
+      method: "PATCH",
+      body: JSON.stringify({ tags: [...selected] }),
+    });
+    navigate("/profile");
   }
 
   return (

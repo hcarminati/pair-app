@@ -18,6 +18,11 @@ vi.mock("../lib/api", () => ({
 const { apiFetch } = await import("../lib/api");
 const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>;
 
+beforeEach(() => {
+  vi.clearAllMocks();
+  mockApiFetch.mockResolvedValue({ ok: true });
+});
+
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -211,5 +216,30 @@ describe("AddInterestsPage", () => {
     await user.click(screen.getByRole("button", { name: /save & continue/i }));
 
     expect(screen.getByRole("button", { name: /saving/i })).toBeDisabled();
+  it("calls PATCH /profiles/me with selected tags on submit", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "hiking" }));
+    await user.click(screen.getByRole("button", { name: "cooking" }));
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+
+    expect(mockApiFetch).toHaveBeenCalledWith("/profiles/me", {
+      method: "PATCH",
+      body: expect.stringContaining('"tags"'),
+    });
+
+    const body = JSON.parse(
+      (mockApiFetch.mock.calls[0] as [string, { body: string }])[1].body,
+    ) as { tags: string[] };
+    expect(body.tags).toContain("hiking");
+    expect(body.tags).toContain("cooking");
+    expect(body.tags).toHaveLength(2);
+  });
+
+  it("navigates to /profile after submit", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+    expect(mockNavigate).toHaveBeenCalledWith("/profile");
   });
 });

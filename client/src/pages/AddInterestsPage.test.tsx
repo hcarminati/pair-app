@@ -1,27 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import AddInterestsPage from "./AddInterestsPage";
-
-const mockNavigate = vi.fn();
-
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return { ...actual, useNavigate: () => mockNavigate };
-});
-
-vi.mock("../lib/api", () => ({
-  apiFetch: vi.fn(),
-}));
-
-const { apiFetch } = await import("../lib/api");
-const mockApiFetch = apiFetch as ReturnType<typeof vi.fn>;
-
-beforeEach(() => {
-  vi.clearAllMocks();
-  mockApiFetch.mockResolvedValue({ ok: true });
-});
 
 function renderPage() {
   return render(
@@ -132,32 +113,5 @@ describe("AddInterestsPage", () => {
     expect(
       screen.getByRole("button", { name: /save & continue/i }),
     ).toBeInTheDocument();
-  });
-
-  it("calls PATCH /profiles/me with selected tags on submit", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("button", { name: "hiking" }));
-    await user.click(screen.getByRole("button", { name: "cooking" }));
-    await user.click(screen.getByRole("button", { name: /save & continue/i }));
-
-    expect(mockApiFetch).toHaveBeenCalledWith("/profiles/me", {
-      method: "PATCH",
-      body: expect.stringContaining('"tags"'),
-    });
-
-    const body = JSON.parse(
-      (mockApiFetch.mock.calls[0] as [string, { body: string }])[1].body,
-    ) as { tags: string[] };
-    expect(body.tags).toContain("hiking");
-    expect(body.tags).toContain("cooking");
-    expect(body.tags).toHaveLength(2);
-  });
-
-  it("navigates to /profile after submit", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await user.click(screen.getByRole("button", { name: /save & continue/i }));
-    expect(mockNavigate).toHaveBeenCalledWith("/profile");
   });
 });

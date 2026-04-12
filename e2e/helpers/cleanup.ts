@@ -31,6 +31,11 @@ export async function deleteTestUser(
     return;
   }
 
-  await supabase.rpc("delete_test_user");
+  const { error: rpcError } = await supabase.rpc("delete_test_user");
+  if (rpcError) {
+    console.warn(`deleteTestUser: RPC failed for ${email} — ${rpcError.message}`);
+  } else {
+    console.log(`deleteTestUser: deleted ${email}`);
+  }
   await supabase.auth.signOut();
 }

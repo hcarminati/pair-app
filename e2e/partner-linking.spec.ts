@@ -61,10 +61,12 @@ test.describe("Partner Linking", () => {
 
       // User B should be redirected to the discovery page immediately.
       await expect(pageB).toHaveURL("/", { timeout: 10_000 });
+      await expect(pageB.getByRole("heading", { name: "Discover" })).toBeVisible();
 
       // User A's ProfilePage polls /auth/me every 3 s and navigates to / when
       // it detects a partnerId. Wait up to 10 s for that redirect.
       await expect(pageA).toHaveURL("/", { timeout: 10_000 });
+      await expect(pageA.getByRole("heading", { name: "Discover" })).toBeVisible();
     } finally {
       await contextA.close();
       await contextB.close();

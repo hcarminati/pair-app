@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { supabase, supabaseAuthClient } from "../lib/supabase.js";
 import { verifyToken } from "../middleware/auth.js";
+import { validatePassword } from "../../../shared/validation.js";
 
 export const authRouter = Router();
 
@@ -19,10 +20,9 @@ authRouter.post("/register", async (req: Request, res: Response) => {
     return;
   }
 
-  // matches shared/validation.ts MIN_PASSWORD_LENGTH but cannot import from shared/ due to tsconfig.json,
-  // so we manually duplicate the check here
-  if (password.length < 8) {
-    res.status(400).json({ error: "Password must be at least 8 characters" });
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    res.status(400).json({ error: passwordError });
     return;
   }
 

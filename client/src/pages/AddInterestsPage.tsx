@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import StepIndicator from "../components/StepIndicator";
 import { apiFetch } from "../lib/api";
+import { normalizeTag } from "../../../shared/validation";
 
 const STEPS = [{ label: "Account" }, { label: "Interests" }];
 
@@ -25,6 +26,8 @@ export default function AddInterestsPage() {
   const [tags, setTags] = useState<string[]>(PRESET_INTERESTS);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [customTag, setCustomTag] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   function toggleTag(tag: string) {
     setSelected((prev) => {
@@ -39,7 +42,7 @@ export default function AddInterestsPage() {
   }
 
   function handleAddCustom() {
-    const trimmed = customTag.trim().toLowerCase();
+    const trimmed = normalizeTag(customTag);
     if (!trimmed || tags.includes(trimmed)) return;
     setTags((prev) => [...prev, trimmed]);
     setSelected((prev) => {
@@ -55,6 +58,33 @@ export default function AddInterestsPage() {
       body: JSON.stringify({ tags: [...selected] }),
     });
     navigate("/profile");
+    if (selected.size > MAX_INTERESTS) return;
+
+    if (selected.size === 0) {
+      navigate("/profile");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const res = await apiFetch("/users/me/interests", {
+        method: "PATCH",
+        body: JSON.stringify({ tags: [...selected] }),
+      });
+
+      const data = (await res.json()) as { error?: string };
+
+      if (!res.ok) {
+        setSubmitError(data.error ?? "Failed to save interests");
+        return;
+      }
+
+      navigate("/profile");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -68,6 +98,7 @@ export default function AddInterestsPage() {
               key={tag}
               type="button"
               onClick={() => toggleTag(tag)}
+              disabled={!selected.has(tag) && selected.size >= MAX_INTERESTS}
               className={`tag${selected.has(tag) ? " tag--selected" : ""}`}
             >
               {tag}
@@ -102,8 +133,15 @@ export default function AddInterestsPage() {
           {selected.size} / {MAX_INTERESTS} selected
         </p>
 
-        <button type="button" className="btn-primary" onClick={() => void handleSubmit()}>
-          Save & continue
+        {submitError && <p className="form-error">{submitError}</p>}
+
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleSubmit}
+          disabled={selected.size > MAX_INTERESTS || submitting}
+        >
+          {submitting ? "Saving..." : "Save & continue"}
         </button>
       </div>
     </div>

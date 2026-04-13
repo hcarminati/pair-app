@@ -50,14 +50,13 @@ interface Props {
 export default function DiscoveryPage({ isLinked }: Props) {
   const [results, setResults] = useState<DiscoveryResult[]>([]);
   const [couples, setCouples] = useState<Couple[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isLinked);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLinked) {
-      setLoading(false);
       return;
     }
 

@@ -924,6 +924,8 @@ code {
 .pill--sm {
   font-size: 12px;
   padding: 2px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Couple grid */
@@ -970,12 +972,14 @@ code {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
 }
 
 .couple-names {
   font-size: 15px;
   font-weight: 500;
   color: #000;
+  min-width: 0;
 }
 
 /* Avatar pair */

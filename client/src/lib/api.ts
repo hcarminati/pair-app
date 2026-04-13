@@ -30,8 +30,10 @@ export async function apiFetch(
       };
       return fetch(`${BASE_URL}${path}`, { ...options, headers: retryHeaders });
     }
-    clearTokens();
-    window.location.href = "/login";
+    if (token) {
+      clearTokens();
+      window.location.href = "/login";
+    }
   }
 
   return res;

@@ -151,6 +151,8 @@ export function LinkPartnerTab({
         <h2 className="onboarding-section-title">{`Paste partner's token`}</h2>
         {linkError && <p className="form-error">{linkError}</p>}
         <input
+          id="partnerToken"
+          aria-label="Partner invite token"
           className="onboarding-input"
           type="text"
           placeholder="XXXX-XXXX-XXXX"

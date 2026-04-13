@@ -51,7 +51,7 @@ export default function LoginPage() {
         <div className="auth-panel-content">
           <h1 className="auth-title">Log in</h1>
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
-            {error && <p className="form-error">{error}</p>}
+            {error && <p role="alert" className="form-error">{error}</p>}
             <div className="form-field">
               <label htmlFor="email">Email</label>
               <input

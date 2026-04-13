@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { CoupleCard, AvatarPair } from "../components/CoupleCard";
 import type { Couple } from "../components/CoupleCard";
 import { apiFetch } from "../lib/api";
@@ -54,7 +54,10 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [locationInput, setLocationInput] = useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isLinked) {
@@ -62,10 +65,12 @@ export default function DiscoveryPage({ isLinked }: Props) {
     }
 
     setLoading(true);
+    const parts: string[] = [];
+    if (activeFilters.length > 0) parts.push(`tags=${activeFilters.join(",")}`);
+    if (locationFilter.length > 0)
+      parts.push(`location=${encodeURIComponent(locationFilter)}`);
     const url =
-      activeFilters.length > 0
-        ? `/discovery?tags=${activeFilters.join(",")}`
-        : "/discovery";
+      parts.length > 0 ? `/discovery?${parts.join("&")}` : "/discovery";
 
     apiFetch(url)
       .then(async (res) => {
@@ -77,19 +82,28 @@ export default function DiscoveryPage({ isLinked }: Props) {
         const data = (await res.json()) as DiscoveryResult[];
         setResults(data);
         setCouples(data.map(toCouple));
-        if (activeFilters.length === 0) {
+        if (activeFilters.length === 0 && locationFilter.length === 0) {
           setAvailableTags([...new Set(data.flatMap((r) => r.tags))]);
         }
       })
       .catch(() => setError("Failed to load discovery feed"))
       .finally(() => setLoading(false));
-  }, [isLinked, activeFilters]);
+  }, [isLinked, activeFilters, locationFilter]);
 
   const toggleFilter = (tag: string) => {
     setSelectedId(null);
     setActiveFilters((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
+  };
+
+  const handleLocationChange = (value: string) => {
+    setLocationInput(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setSelectedId(null);
+      setLocationFilter(value.trim().toLowerCase());
+    }, 300);
   };
 
   const visibleCouples = couples;
@@ -124,6 +138,17 @@ export default function DiscoveryPage({ isLinked }: Props) {
         <p className="discovery-subtitle">{error}</p>
       ) : (
         <>
+          <div className="discovery-location-filter">
+            <input
+              type="text"
+              className="discovery-location-input"
+              placeholder="Filter by location…"
+              value={locationInput}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              aria-label="Filter by location"
+            />
+          </div>
+
           {availableTags.length > 0 && (
             <div className="filter-pills">
               {availableTags.map((tag) => (

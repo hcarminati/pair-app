@@ -303,6 +303,85 @@ describe("DiscoveryPage", () => {
     });
   });
 
+  describe("location filter input", () => {
+    it("renders a location filter input", async () => {
+      mockSuccess();
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      expect(
+        screen.getByRole("textbox", { name: /filter by location/i }),
+      ).toBeInTheDocument();
+    });
+
+    it("re-fetches with ?location= after debounce when location is typed", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.type(
+        screen.getByRole("textbox", { name: /filter by location/i }),
+        "Denver",
+      );
+
+      await waitFor(
+        () =>
+          expect(mockApiFetch).toHaveBeenLastCalledWith(
+            "/discovery?location=denver",
+          ),
+        { timeout: 1000 },
+      );
+    });
+
+    it("combines location and tag filters in the same request", async () => {
+      mockApiFetch.mockResolvedValue({ ok: true, json: async () => FIXTURE });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
+      );
+
+      await userEvent.type(
+        screen.getByRole("textbox", { name: /filter by location/i }),
+        "Denver",
+      );
+
+      await waitFor(
+        () =>
+          expect(mockApiFetch).toHaveBeenLastCalledWith(
+            "/discovery?tags=hiking&location=denver",
+          ),
+        { timeout: 1000 },
+      );
+    });
+  });
+
   it("modal shows per-partner cards with name, bio, and location", async () => {
     mockSuccess();
     render(

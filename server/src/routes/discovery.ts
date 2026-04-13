@@ -209,7 +209,7 @@ discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
     })
     .sort((a, b) => b.shared_count - a.shared_count);
 
-  // 9. Apply tag filter if specified (AND logic — couple must have ALL filter tags)
+  // 9. Apply tag filter if specified (OR logic — couple must have at least one filter tag)
   const rawTags =
     typeof req.query["tags"] === "string" ? req.query["tags"] : "";
   const filterTags = rawTags
@@ -217,10 +217,23 @@ discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t.length > 0);
 
-  const filtered =
-    filterTags.length === 0
-      ? results
-      : results.filter((r) => filterTags.some((ft) => r.tags.includes(ft)));
+  // 10. Apply location filter if specified (case-insensitive substring match)
+  const locationFilter =
+    typeof req.query["location"] === "string"
+      ? req.query["location"].trim().toLowerCase()
+      : "";
+
+  const filtered = results
+    .filter(
+      (r) =>
+        filterTags.length === 0 ||
+        filterTags.some((ft) => r.tags.includes(ft)),
+    )
+    .filter(
+      (r) =>
+        locationFilter.length === 0 ||
+        (r.location ?? "").toLowerCase().includes(locationFilter),
+    );
 
   res.status(200).json(filtered);
 });

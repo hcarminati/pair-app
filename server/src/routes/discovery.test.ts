@@ -388,7 +388,7 @@ describe("GET /discovery", () => {
       expect(res.body).toEqual([]);
     });
 
-    it("filter tags are normalized case-insensitively", async () => {
+    it("filter tags are case-insensitive", async () => {
       mockAuthUser();
       setupMocks(TWO_PAIR_SETUP);
 
@@ -400,6 +400,116 @@ describe("GET /discovery", () => {
       expect(res.status).toBe(200);
       expect(res.body).toHaveLength(1);
       expect(res.body[0].pair_id).toBe("pair-a");
+    });
+  });
+
+  describe("location filtering (?location=...)", () => {
+    const LOCATION_SETUP = {
+      allPairs: [
+        { id: "pair-nyc", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
+        { id: "pair-la", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        { id: "pair-null", about_us: null, location: null, profile_id_1: "uc1", profile_id_2: "uc2" },
+      ],
+      candidateProfiles: [
+        { id: "ua1", display_name: "Alice", about_me: null, location: null },
+        { id: "ua2", display_name: "Bob", about_me: null, location: null },
+        { id: "ub1", display_name: "Carol", about_me: null, location: null },
+        { id: "ub2", display_name: "Dan", about_me: null, location: null },
+        { id: "uc1", display_name: "Eve", about_me: null, location: null },
+        { id: "uc2", display_name: "Frank", about_me: null, location: null },
+      ],
+      candidateTags: [],
+    };
+
+    it("returns only couples whose location includes the search string", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=new york")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-nyc");
+    });
+
+    it("location filter is case-insensitive", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=LOS ANGELES")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-la");
+    });
+
+    it("empty location param returns the full feed", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(3);
+    });
+
+    it("unmatched location returns empty array (not 404)", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=nowhere")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("couples with null location are excluded when a location filter is active", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=new")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((r: { pair_id: string }) => r.pair_id);
+      expect(ids).not.toContain("pair-null");
+    });
+
+    it("location and tag filters combine (both must match)", async () => {
+      mockAuthUser();
+      setupMocks({
+        allPairs: [
+          { id: "pair-nyc-hiker", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
+          { id: "pair-la-hiker", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        ],
+        candidateProfiles: [
+          { id: "ua1", display_name: "Alice", about_me: null, location: null },
+          { id: "ua2", display_name: "Bob", about_me: null, location: null },
+          { id: "ub1", display_name: "Carol", about_me: null, location: null },
+          { id: "ub2", display_name: "Dan", about_me: null, location: null },
+        ],
+        candidateTags: [
+          { user_id: "ua1", tags: { label: "hiking" } },
+          { user_id: "ub1", tags: { label: "hiking" } },
+        ],
+      });
+
+      const res = await request(app)
+        .get("/discovery?location=new york&tags=hiking")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-nyc-hiker");
     });
   });
 });

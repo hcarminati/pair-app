@@ -54,8 +54,10 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [locationInput, setLocationInput] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -84,6 +86,15 @@ export default function DiscoveryPage({ isLinked }: Props) {
         setCouples(data.map(toCouple));
         if (activeFilters.length === 0 && locationFilter.length === 0) {
           setAvailableTags([...new Set(data.flatMap((r) => r.tags))]);
+          setAvailableLocations(
+            [
+              ...new Set(
+                data
+                  .map((r) => r.location)
+                  .filter((l): l is string => l !== null),
+              ),
+            ].sort(),
+          );
         }
       })
       .catch(() => setError("Failed to load discovery feed"))
@@ -97,13 +108,33 @@ export default function DiscoveryPage({ isLinked }: Props) {
     );
   };
 
+  const locationSuggestions =
+    locationInput.trim().length > 0
+      ? availableLocations.filter((loc) =>
+          loc.toLowerCase().includes(locationInput.trim().toLowerCase()),
+        )
+      : availableLocations;
+
+  const applyLocationFilter = (value: string) => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    setSelectedId(null);
+    setLocationFilter(value.trim().toLowerCase());
+  };
+
   const handleLocationChange = (value: string) => {
     setLocationInput(value);
     if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    debounceTimer.current = setTimeout(() => {
-      setSelectedId(null);
-      setLocationFilter(value.trim().toLowerCase());
-    }, 300);
+    if (value.trim() === "") {
+      setLocationFilter("");
+      return;
+    }
+    debounceTimer.current = setTimeout(() => applyLocationFilter(value), 300);
+  };
+
+  const selectSuggestion = (loc: string) => {
+    setLocationInput(loc);
+    setShowSuggestions(false);
+    applyLocationFilter(loc);
   };
 
   const visibleCouples = couples;
@@ -145,8 +176,29 @@ export default function DiscoveryPage({ isLinked }: Props) {
               placeholder="Filter by location…"
               value={locationInput}
               onChange={(e) => handleLocationChange(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() =>
+                setTimeout(() => setShowSuggestions(false), 150)
+              }
               aria-label="Filter by location"
+              aria-autocomplete="list"
+              aria-expanded={showSuggestions && locationSuggestions.length > 0}
             />
+            {showSuggestions && locationSuggestions.length > 0 && (
+              <ul className="location-suggestions" role="listbox">
+                {locationSuggestions.map((loc) => (
+                  <li
+                    key={loc}
+                    role="option"
+                    aria-selected={loc.toLowerCase() === locationFilter}
+                    className={`location-suggestion${loc.toLowerCase() === locationFilter ? " location-suggestion--active" : ""}`}
+                    onMouseDown={() => selectSuggestion(loc)}
+                  >
+                    {loc}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {availableTags.length > 0 && (

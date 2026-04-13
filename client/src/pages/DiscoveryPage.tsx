@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { CoupleCard, AvatarPair } from "../components/CoupleCard";
 import type { Couple } from "../components/CoupleCard";
 import { apiFetch } from "../lib/api";
@@ -55,11 +55,8 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
-  const [locationInput, setLocationInput] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeLocation, setActiveLocation] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!isLinked) {
@@ -69,8 +66,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
     setLoading(true);
     const parts: string[] = [];
     if (activeFilters.length > 0) parts.push(`tags=${activeFilters.join(",")}`);
-    if (locationFilter.length > 0)
-      parts.push(`location=${encodeURIComponent(locationFilter)}`);
+    if (activeLocation) parts.push(`location=${encodeURIComponent(activeLocation)}`);
     const url =
       parts.length > 0 ? `/discovery?${parts.join("&")}` : "/discovery";
 
@@ -84,7 +80,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
         const data = (await res.json()) as DiscoveryResult[];
         setResults(data);
         setCouples(data.map(toCouple));
-        if (activeFilters.length === 0 && locationFilter.length === 0) {
+        if (activeFilters.length === 0 && activeLocation === null) {
           setAvailableTags([...new Set(data.flatMap((r) => r.tags))]);
           setAvailableLocations(
             [
@@ -99,7 +95,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
       })
       .catch(() => setError("Failed to load discovery feed"))
       .finally(() => setLoading(false));
-  }, [isLinked, activeFilters, locationFilter]);
+  }, [isLinked, activeFilters, activeLocation]);
 
   const toggleFilter = (tag: string) => {
     setSelectedId(null);
@@ -108,33 +104,9 @@ export default function DiscoveryPage({ isLinked }: Props) {
     );
   };
 
-  const locationSuggestions =
-    locationInput.trim().length > 0
-      ? availableLocations.filter((loc) =>
-          loc.toLowerCase().includes(locationInput.trim().toLowerCase()),
-        )
-      : availableLocations;
-
-  const applyLocationFilter = (value: string) => {
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+  const toggleLocation = (loc: string) => {
     setSelectedId(null);
-    setLocationFilter(value.trim().toLowerCase());
-  };
-
-  const handleLocationChange = (value: string) => {
-    setLocationInput(value);
-    if (debounceTimer.current) clearTimeout(debounceTimer.current);
-    if (value.trim() === "") {
-      setLocationFilter("");
-      return;
-    }
-    debounceTimer.current = setTimeout(() => applyLocationFilter(value), 300);
-  };
-
-  const selectSuggestion = (loc: string) => {
-    setLocationInput(loc);
-    setShowSuggestions(false);
-    applyLocationFilter(loc);
+    setActiveLocation((prev) => (prev === loc ? null : loc));
   };
 
   const visibleCouples = couples;
@@ -169,37 +141,19 @@ export default function DiscoveryPage({ isLinked }: Props) {
         <p className="discovery-subtitle">{error}</p>
       ) : (
         <>
-          <div className="discovery-location-filter">
-            <input
-              type="text"
-              className="discovery-location-input"
-              placeholder="Filter by location…"
-              value={locationInput}
-              onChange={(e) => handleLocationChange(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() =>
-                setTimeout(() => setShowSuggestions(false), 150)
-              }
-              aria-label="Filter by location"
-              aria-autocomplete="list"
-              aria-expanded={showSuggestions && locationSuggestions.length > 0}
-            />
-            {showSuggestions && locationSuggestions.length > 0 && (
-              <ul className="location-suggestions" role="listbox">
-                {locationSuggestions.map((loc) => (
-                  <li
-                    key={loc}
-                    role="option"
-                    aria-selected={loc.toLowerCase() === locationFilter}
-                    className={`location-suggestion${loc.toLowerCase() === locationFilter ? " location-suggestion--active" : ""}`}
-                    onMouseDown={() => selectSuggestion(loc)}
-                  >
-                    {loc}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          {availableLocations.length > 0 && (
+            <div className="filter-pills">
+              {availableLocations.map((loc) => (
+                <button
+                  key={loc}
+                  className={`pill${activeLocation === loc ? " pill--active" : ""}`}
+                  onClick={() => toggleLocation(loc)}
+                >
+                  {loc}
+                </button>
+              ))}
+            </div>
+          )}
 
           {availableTags.length > 0 && (
             <div className="filter-pills">

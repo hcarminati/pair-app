@@ -303,71 +303,23 @@ describe("DiscoveryPage", () => {
     });
   });
 
-  describe("location autocomplete", () => {
-    it("renders a location filter input", async () => {
+  describe("location filter pills", () => {
+    it("renders location pills derived from fetched pair locations", async () => {
       mockSuccess();
       render(
         <MemoryRouter>
           <DiscoveryPage isLinked={true} />
         </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      expect(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-      ).toBeInTheDocument();
-    });
-
-    it("shows location suggestions from the feed on focus", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <DiscoveryPage isLinked={true} />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      await userEvent.click(
-        screen.getByRole("textbox", { name: /filter by location/i }),
       );
 
       // FIXTURE has "Denver, CO" and "Portland, OR" as pair locations
       await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
+        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
       );
-      expect(screen.getByRole("option", { name: /portland/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /portland, or/i })).toBeInTheDocument();
     });
 
-    it("filters suggestions as the user types", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <DiscoveryPage isLinked={true} />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      await userEvent.type(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-        "Den",
-      );
-
-      await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
-      );
-      expect(screen.queryByRole("option", { name: /portland/i })).not.toBeInTheDocument();
-    });
-
-    it("selecting a suggestion re-fetches immediately with that location", async () => {
+    it("clicking a location pill re-fetches with that location", async () => {
       mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
       mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
 
@@ -378,27 +330,19 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
       );
 
-      await userEvent.click(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-      );
-
-      await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
-      );
-
-      await userEvent.click(screen.getByRole("option", { name: /denver/i }));
+      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
 
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith(
-          "/discovery?location=denver%2C%20co",
+          "/discovery?location=Denver%2C%20CO",
         ),
       );
     });
 
-    it("selected suggestion is highlighted in the dropdown", async () => {
+    it("active location pill has pill--active class", async () => {
       mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
       mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
 
@@ -409,31 +353,48 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
       );
 
-      await userEvent.click(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-      );
+      const pill = screen.getByRole("button", { name: /denver, co/i });
+      expect(pill).not.toHaveClass("pill--active");
+
+      await userEvent.click(pill);
+
       await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
-      );
-
-      await userEvent.click(screen.getByRole("option", { name: /denver/i }));
-
-      await userEvent.click(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-      );
-      await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
-      );
-
-      expect(screen.getByRole("option", { name: /denver/i })).toHaveClass(
-        "location-suggestion--active",
+        expect(screen.getByRole("button", { name: /denver, co/i })).toHaveClass("pill--active"),
       );
     });
 
-    it("combines location suggestion with active tag filters", async () => {
+    it("clicking the active location pill deselects it and re-fetches unfiltered", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith(
+          "/discovery?location=Denver%2C%20CO",
+        ),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery"),
+      );
+    });
+
+    it("combines location pill with active tag filters", async () => {
       mockApiFetch.mockResolvedValue({ ok: true, json: async () => FIXTURE });
 
       render(
@@ -451,18 +412,10 @@ describe("DiscoveryPage", () => {
         expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
       );
 
-      await userEvent.click(
-        screen.getByRole("textbox", { name: /filter by location/i }),
-      );
-      await waitFor(() =>
-        expect(screen.getByRole("option", { name: /denver/i })).toBeInTheDocument(),
-      );
-
-      await userEvent.click(screen.getByRole("option", { name: /denver/i }));
-
+      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith(
-          "/discovery?tags=hiking&location=denver%2C%20co",
+          "/discovery?tags=hiking&location=Denver%2C%20CO",
         ),
       );
     });

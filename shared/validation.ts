@@ -6,3 +6,7 @@ export function validatePassword(password: string): string | null {
   }
   return null;
 }
+
+export function normalizeTag(label: string): string {
+  return label.trim().toLowerCase();
+}

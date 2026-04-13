@@ -146,12 +146,7 @@ export function MyProfileTab() {
         </div>
         <div className="form-field">
           <label htmlFor="profileEmail">Email</label>
-          <input
-            id="profileEmail"
-            type="email"
-            value={email}
-            readOnly
-          />
+          <input id="profileEmail" type="email" value={email} readOnly />
         </div>
       </div>
 

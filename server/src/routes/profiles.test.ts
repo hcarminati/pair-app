@@ -132,17 +132,19 @@ describe("PATCH /profiles/me", () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === "profiles") {
         return {
-          update: vi.fn().mockImplementation((body: Record<string, unknown>) => {
-            expect(body).toMatchObject({
-              display_name: "Alex",
-              about_me: "Love hiking",
-              location: "Portland, OR",
-            });
-            profileUpdateCalled = true;
-            return {
-              eq: vi.fn().mockResolvedValue({ error: null }),
-            };
-          }),
+          update: vi
+            .fn()
+            .mockImplementation((body: Record<string, unknown>) => {
+              expect(body).toMatchObject({
+                display_name: "Alex",
+                about_me: "Love hiking",
+                location: "Portland, OR",
+              });
+              profileUpdateCalled = true;
+              return {
+                eq: vi.fn().mockResolvedValue({ error: null }),
+              };
+            }),
         };
       }
       if (table === "user_tags") {
@@ -204,12 +206,14 @@ describe("PATCH /profiles/me", () => {
           delete: vi.fn().mockReturnValue({
             eq: vi.fn().mockResolvedValue({ error: null }),
           }),
-          insert: vi.fn().mockImplementation(
-            (rows: { user_id: string; tag_id: string }[]) => {
-              capturedUserTagInsert = rows;
-              return Promise.resolve({ error: null });
-            },
-          ),
+          insert: vi
+            .fn()
+            .mockImplementation(
+              (rows: { user_id: string; tag_id: string }[]) => {
+                capturedUserTagInsert = rows;
+                return Promise.resolve({ error: null });
+              },
+            ),
         };
       }
       if (table === "tags") {
@@ -319,10 +323,12 @@ describe("PATCH /profiles/me", () => {
     mockFrom.mockImplementation((table: string) => {
       if (table === "profiles") {
         return {
-          update: vi.fn().mockImplementation((body: Record<string, unknown>) => {
-            capturedProfileUpdate = body;
-            return { eq: vi.fn().mockResolvedValue({ error: null }) };
-          }),
+          update: vi
+            .fn()
+            .mockImplementation((body: Record<string, unknown>) => {
+              capturedProfileUpdate = body;
+              return { eq: vi.fn().mockResolvedValue({ error: null }) };
+            }),
         };
       }
       if (table === "user_tags") {
@@ -366,9 +372,7 @@ describe("PATCH /profiles/me", () => {
       error: { message: "Not authenticated" },
     });
 
-    const res = await request(app)
-      .patch("/profiles/me")
-      .send({ tags: [] });
+    const res = await request(app).patch("/profiles/me").send({ tags: [] });
 
     expect(res.status).toBe(401);
   });

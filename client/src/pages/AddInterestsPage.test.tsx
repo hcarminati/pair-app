@@ -228,7 +228,7 @@ describe("AddInterestsPage", () => {
 
   it("shows loading state on submit button while request is in flight", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockImplementation(() => new Promise(() => { })); // never resolves
+    mockApiFetch.mockImplementation(() => new Promise(() => {})); // never resolves
 
     renderPage();
     await user.click(screen.getByRole("button", { name: "hiking" }));

@@ -198,7 +198,9 @@ describe("MyProfileTab", () => {
     await user.click(screen.getByRole("button", { name: /save profile/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/profile saved successfully/i)).toBeInTheDocument(),
+      expect(
+        screen.getByText(/profile saved successfully/i),
+      ).toBeInTheDocument(),
     );
   });
 

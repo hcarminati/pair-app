@@ -31,7 +31,7 @@ profilesRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
   }
 
   const tags = (userTags ?? [])
-    .map((ut: { tags: { label: string } | null }) => ut.tags?.label)
+    .map((ut) => (ut.tags as unknown as { label: string } | null)?.label)
     .filter((label): label is string => typeof label === "string");
 
   res.status(200).json({
@@ -78,7 +78,8 @@ profilesRouter.patch(
 
     // Update profile fields
     const profileUpdate: Record<string, string | undefined> = {};
-    if (display_name !== undefined) profileUpdate["display_name"] = display_name;
+    if (display_name !== undefined)
+      profileUpdate["display_name"] = display_name;
     if (about_me !== undefined) profileUpdate["about_me"] = about_me;
     if (location !== undefined) profileUpdate["location"] = location;
 

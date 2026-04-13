@@ -74,7 +74,9 @@ describe("PATCH /users/me/interests", () => {
     mockAuthenticatedUser();
     const tagRows = [{ id: "t1", label: "hiking" }];
 
-    const upsertSelect = vi.fn().mockResolvedValue({ data: tagRows, error: null });
+    const upsertSelect = vi
+      .fn()
+      .mockResolvedValue({ data: tagRows, error: null });
     const upsertFn = vi.fn().mockReturnValue({ select: upsertSelect });
     const deleteEq = vi.fn().mockResolvedValue({ error: null });
     const deleteFn = vi.fn().mockReturnValue({ eq: deleteEq });
@@ -97,9 +99,7 @@ describe("PATCH /users/me/interests", () => {
     );
     expect(deleteFn).toHaveBeenCalled();
     expect(deleteEq).toHaveBeenCalledWith("user_id", USER_ID);
-    expect(insertFn).toHaveBeenCalledWith([
-      { user_id: USER_ID, tag_id: "t1" },
-    ]);
+    expect(insertFn).toHaveBeenCalledWith([{ user_id: USER_ID, tag_id: "t1" }]);
   });
 
   it("returns 422 when more than 10 tags are submitted", async () => {
@@ -120,7 +120,10 @@ describe("PATCH /users/me/interests", () => {
 
     const upsertSelect = vi
       .fn()
-      .mockResolvedValue({ data: [{ id: "t1", label: "hiking" }], error: null });
+      .mockResolvedValue({
+        data: [{ id: "t1", label: "hiking" }],
+        error: null,
+      });
     const upsertFn = vi.fn().mockReturnValue({ select: upsertSelect });
     const deleteEq = vi.fn().mockResolvedValue({ error: null });
     const deleteFn = vi.fn().mockReturnValue({ eq: deleteEq });

@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AddInterestsPage from "./pages/AddInterestsPage";
 import ProfilePage from "./pages/ProfilePage";
+import CoupleProfilePage from "./pages/CoupleProfilePage";
 import DiscoverPage from "./pages/DiscoverPage";
 import InboundRequestsPage from "./pages/InboundRequestsPage";
 import PartnerInterestsPage from "./pages/PartnerInterestsPage";
@@ -27,6 +28,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/couple-profile" element={<CoupleProfilePage />} />
         </Route>
       </Route>
 

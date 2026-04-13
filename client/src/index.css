@@ -227,6 +227,55 @@ body {
   cursor: not-allowed;
 }
 
+.btn--danger {
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #c0392b;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+
+.btn--danger:hover {
+  background: #a93226;
+}
+
+.btn--danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.unlink-confirm {
+  background: #fff8f8;
+  border: 1px solid #f5c6c6;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.unlink-confirm-warning {
+  font-size: 14px;
+  color: #c0392b;
+  font-weight: 600;
+  margin: 0;
+}
+
+.unlink-confirm-detail {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.unlink-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
 .btn-primary-inner {
   display: flex;
   align-items: center;
@@ -850,7 +899,6 @@ code {
 .pill {
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 14px;
   border: 1px solid #e0e0e0;
   background: #fff;
   color: #000;
@@ -858,6 +906,7 @@ code {
   transition: border-color 0.15s, background 0.15s, color 0.15s;
   font: inherit;
   font-size: 14px;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
 }
@@ -899,6 +948,14 @@ code {
 
 .couple-card:hover {
   border-color: #000;
+}
+
+.couple-card--static {
+  cursor: default;
+}
+
+.couple-card--static:hover {
+  border-color: #e0e0e0;
 }
 
 .couple-card-header {
@@ -1080,6 +1137,13 @@ code {
 
 .discovery-modal-section {
   margin-bottom: 24px;
+}
+
+.discovery-modal-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-h);
+  margin: 0 0 12px;
 }
 
 .discovery-modal-common {

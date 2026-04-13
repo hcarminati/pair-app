@@ -1,18 +1,6 @@
 import { useState } from "react";
-
-interface Couple {
-  id: number;
-  names: string;
-  initials1: string;
-  initials2: string;
-  inCommon: number;
-  interests: string[];
-  matching: string[];
-  description: string;
-  location: string;
-  complete: boolean;
-  connected: boolean;
-}
+import { CoupleCard, AvatarPair } from "../components/CoupleCard";
+import type { Couple } from "../components/CoupleCard";
 
 // Tags normalized: lowercase + trim (FR-TAG-03)
 const PLACEHOLDER_COUPLES: Couple[] = [
@@ -104,25 +92,6 @@ const PLACEHOLDER_COUPLES: Couple[] = [
 
 const ALL_FILTERS = ["hiking", "board games", "cooking", "films", "cycling"];
 
-function AvatarPair({
-  initials1,
-  initials2,
-  size = "md",
-}: {
-  initials1: string;
-  initials2: string;
-  size?: "sm" | "md" | "lg";
-}) {
-  const sizeClass =
-    size === "lg" ? "avatar--lg" : size === "sm" ? "avatar--sm" : "avatar--md";
-  return (
-    <div className="avatar-pair">
-      <div className={`avatar ${sizeClass}`}>{initials1}</div>
-      <div className={`avatar ${sizeClass} avatar--overlap`}>{initials2}</div>
-    </div>
-  );
-}
-
 interface Props {
   isLinked: boolean;
 }
@@ -184,40 +153,12 @@ export default function DiscoveryPage({ isLinked }: Props) {
 
           <div className="couple-grid">
             {visibleCouples.map((couple) => (
-              <div
+              <CoupleCard
                 key={couple.id}
-                className="couple-card"
+                couple={couple}
                 onClick={() => setSelectedCouple(couple.id)}
-              >
-                <div className="couple-card-header">
-                  <div className="couple-card-identity">
-                    <AvatarPair
-                      initials1={couple.initials1}
-                      initials2={couple.initials2}
-                    />
-                    <span className="couple-names">{couple.names}</span>
-                  </div>
-                  <span className="pill pill--active pill--sm">
-                    {couple.inCommon} in common
-                  </span>
-                </div>
-                <div className="interest-pills">
-                  {couple.interests.map((interest) => (
-                    <span
-                      key={interest}
-                      className={`pill pill--sm${couple.matching.includes(interest) ? " pill--active" : ""}`}
-                    >
-                      {interest}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  className="btn btn--secondary btn--full"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {`I'm interested`}
-                </button>
-              </div>
+                onInterested={() => {}}
+              />
             ))}
           </div>
 

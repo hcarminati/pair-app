@@ -53,6 +53,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [loading, setLoading] = useState(isLinked);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +61,13 @@ export default function DiscoveryPage({ isLinked }: Props) {
       return;
     }
 
-    apiFetch("/discovery")
+    setLoading(true);
+    const url =
+      activeFilters.length > 0
+        ? `/discovery?tags=${activeFilters.join(",")}`
+        : "/discovery";
+
+    apiFetch(url)
       .then(async (res) => {
         if (!res.ok) {
           const body = (await res.json()) as { error?: string };
@@ -70,25 +77,22 @@ export default function DiscoveryPage({ isLinked }: Props) {
         const data = (await res.json()) as DiscoveryResult[];
         setResults(data);
         setCouples(data.map(toCouple));
+        if (activeFilters.length === 0) {
+          setAvailableTags([...new Set(data.flatMap((r) => r.tags))]);
+        }
       })
       .catch(() => setError("Failed to load discovery feed"))
       .finally(() => setLoading(false));
-  }, [isLinked]);
-
-  const allTags = [...new Set(couples.flatMap((c) => c.interests))];
+  }, [isLinked, activeFilters]);
 
   const toggleFilter = (tag: string) => {
+    setSelectedId(null);
     setActiveFilters((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
-  const visibleCouples =
-    activeFilters.length === 0
-      ? couples
-      : couples.filter((c) =>
-          activeFilters.some((f) => c.interests.includes(f)),
-        );
+  const visibleCouples = couples;
 
   const selectedResult = selectedId
     ? results.find((r) => r.pair_id === selectedId) ?? null
@@ -120,9 +124,9 @@ export default function DiscoveryPage({ isLinked }: Props) {
         <p className="discovery-subtitle">{error}</p>
       ) : (
         <>
-          {allTags.length > 0 && (
+          {availableTags.length > 0 && (
             <div className="filter-pills">
-              {allTags.map((tag) => (
+              {availableTags.map((tag) => (
                 <button
                   key={tag}
                   className={`pill${activeFilters.includes(tag) ? " pill--active" : ""}`}

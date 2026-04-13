@@ -9,7 +9,7 @@ export const discoveryRouter = Router();
 // Returns couples ranked by shared tag count with the requesting couple.
 // Excludes: own couple, incomplete couples, already-connected couples.
 // Requires the requesting user to be linked with a partner (403 otherwise).
-discoveryRouter.get("/", verifyToken, async (_req: Request, res: Response) => {
+discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
   const user = res.locals["user"] as { id: string };
 
   // 1. Verify user is paired
@@ -209,5 +209,18 @@ discoveryRouter.get("/", verifyToken, async (_req: Request, res: Response) => {
     })
     .sort((a, b) => b.shared_count - a.shared_count);
 
-  res.status(200).json(results);
+  // 9. Apply tag filter if specified (AND logic — couple must have ALL filter tags)
+  const rawTags =
+    typeof req.query["tags"] === "string" ? req.query["tags"] : "";
+  const filterTags = rawTags
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t.length > 0);
+
+  const filtered =
+    filterTags.length === 0
+      ? results
+      : results.filter((r) => filterTags.some((ft) => r.tags.includes(ft)));
+
+  res.status(200).json(filtered);
 });

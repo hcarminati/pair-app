@@ -315,4 +315,91 @@ describe("GET /discovery", () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
+
+  describe("tag filtering (?tags=...)", () => {
+    const TWO_PAIR_SETUP = {
+      allPairs: [
+        { id: "pair-a", about_us: null, location: "NYC", profile_id_1: "ua1", profile_id_2: "ua2" },
+        { id: "pair-b", about_us: null, location: "LA", profile_id_1: "ub1", profile_id_2: "ub2" },
+      ],
+      candidateProfiles: [
+        { id: "ua1", display_name: "Alice", about_me: null, location: null },
+        { id: "ua2", display_name: "Bob", about_me: null, location: null },
+        { id: "ub1", display_name: "Carol", about_me: null, location: null },
+        { id: "ub2", display_name: "Dan", about_me: null, location: null },
+      ],
+      // pair-a: hiking + cooking; pair-b: hiking only
+      candidateTags: [
+        { user_id: "ua1", tags: { label: "hiking" } },
+        { user_id: "ua2", tags: { label: "cooking" } },
+        { user_id: "ub1", tags: { label: "hiking" } },
+        { user_id: "ub2", tags: { label: "films" } },
+      ],
+    };
+
+    it("single-tag filter returns only couples that have that tag", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?tags=cooking")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-a");
+    });
+
+    it("multi-tag OR filter returns couples that have ANY of the specified tags", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      // pair-a: hiking + cooking; pair-b: hiking + films
+      // ?tags=cooking,films → pair-a has cooking, pair-b has films → both returned
+      const res = await request(app)
+        .get("/discovery?tags=cooking,films")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+    });
+
+    it("empty tags param returns the full unfiltered feed", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+    });
+
+    it("unknown tag returns empty array (not 404)", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?tags=nonexistenttag")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("filter tags are normalized case-insensitively", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      // COOKING matches pair-a; both pairs have hiking so ?tags=COOKING returns only pair-a
+      const res = await request(app)
+        .get("/discovery?tags=COOKING")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-a");
+    });
+  });
 });

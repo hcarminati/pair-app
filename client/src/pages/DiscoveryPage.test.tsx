@@ -204,6 +204,105 @@ describe("DiscoveryPage", () => {
     );
   });
 
+  describe("tag filter bar", () => {
+    it("re-fetches from server with ?tags= when a filter pill is clicked", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
+
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
+      );
+    });
+
+    it("active filter pills have the pill--active class", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      );
+
+      const hikingPill = screen.getByRole("button", { name: /hiking/i });
+      expect(hikingPill).not.toHaveClass("pill--active");
+
+      await userEvent.click(hikingPill);
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toHaveClass("pill--active"),
+      );
+    });
+
+    it("multiple active filters construct a comma-separated ?tags= OR query", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /cycling/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking,cycling"),
+      );
+    });
+
+    it("deselecting a filter re-fetches without that tag", async () => {
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery"),
+      );
+    });
+  });
+
   it("modal shows per-partner cards with name, bio, and location", async () => {
     mockSuccess();
     render(

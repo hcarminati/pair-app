@@ -63,7 +63,6 @@ export default function DiscoveryPage({ isLinked }: Props) {
       return;
     }
 
-    setLoading(true);
     const parts: string[] = [];
     if (activeFilters.length > 0) parts.push(`tags=${activeFilters.join(",")}`);
     if (activeLocation) parts.push(`location=${encodeURIComponent(activeLocation)}`);

@@ -53,11 +53,6 @@ export default function AddInterestsPage() {
   }
 
   async function handleSubmit() {
-    await apiFetch("/profiles/me", {
-      method: "PATCH",
-      body: JSON.stringify({ tags: [...selected] }),
-    });
-    navigate("/profile");
     if (selected.size > MAX_INTERESTS) return;
 
     if (selected.size === 0) {

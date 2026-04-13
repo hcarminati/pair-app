@@ -67,7 +67,10 @@ pairsRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
     return;
   }
 
-  const rows = (tagRows ?? []) as { user_id: string; tags: { label: string } | null }[];
+  const rows = (tagRows ?? []) as unknown as {
+    user_id: string;
+    tags: { label: string } | null;
+  }[];
 
   const partner1Tags = [
     ...new Set(
@@ -76,7 +79,9 @@ pairsRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
         .map((r) => r.tags?.label)
         .filter((l): l is string => typeof l === "string"),
     ),
-  ].sort().slice(0, MAX_TAGS_PER_USER);
+  ]
+    .sort()
+    .slice(0, MAX_TAGS_PER_USER);
 
   const partner2Tags = [
     ...new Set(
@@ -85,7 +90,9 @@ pairsRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
         .map((r) => r.tags?.label)
         .filter((l): l is string => typeof l === "string"),
     ),
-  ].sort().slice(0, MAX_TAGS_PER_USER);
+  ]
+    .sort()
+    .slice(0, MAX_TAGS_PER_USER);
 
   const partner2Set = new Set(partner2Tags);
   const sharedTags = partner1Tags.filter((t) => partner2Set.has(t));

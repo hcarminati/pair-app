@@ -104,11 +104,14 @@ export function CouplePreviewTab() {
           <div className="couple-card-identity">
             <div className="avatar-pair">
               <div className="avatar avatar--lg">{initials1}</div>
-              <div className="avatar avatar--lg avatar--overlap">{initials2}</div>
+              <div className="avatar avatar--lg avatar--overlap">
+                {initials2}
+              </div>
             </div>
             <div>
               <h2>
-                {profile.partner1.display_name} &amp; {profile.partner2.display_name}
+                {profile.partner1.display_name} &amp;{" "}
+                {profile.partner2.display_name}
               </h2>
               {profile.location && (
                 <p className="discovery-subtitle">{profile.location}</p>
@@ -144,7 +147,9 @@ export function CouplePreviewTab() {
               <div className="couple-card-header">
                 <div className="couple-card-identity">
                   <div className="avatar avatar--md">{initials1}</div>
-                  <span className="couple-names">{profile.partner1.display_name}</span>
+                  <span className="couple-names">
+                    {profile.partner1.display_name}
+                  </span>
                 </div>
               </div>
               <p className="discovery-subtitle">
@@ -156,7 +161,9 @@ export function CouplePreviewTab() {
               {profile.partner1.tags.length > 0 && (
                 <div className="interest-pills" style={{ marginTop: 12 }}>
                   {profile.partner1.tags.map((tag) => (
-                    <span key={tag} className="pill pill--sm">{tag}</span>
+                    <span key={tag} className="pill pill--sm">
+                      {tag}
+                    </span>
                   ))}
                 </div>
               )}
@@ -165,7 +172,9 @@ export function CouplePreviewTab() {
               <div className="couple-card-header">
                 <div className="couple-card-identity">
                   <div className="avatar avatar--md">{initials2}</div>
-                  <span className="couple-names">{profile.partner2.display_name}</span>
+                  <span className="couple-names">
+                    {profile.partner2.display_name}
+                  </span>
                 </div>
               </div>
               <p className="discovery-subtitle">
@@ -177,7 +186,9 @@ export function CouplePreviewTab() {
               {profile.partner2.tags.length > 0 && (
                 <div className="interest-pills" style={{ marginTop: 12 }}>
                   {profile.partner2.tags.map((tag) => (
-                    <span key={tag} className="pill pill--sm">{tag}</span>
+                    <span key={tag} className="pill pill--sm">
+                      {tag}
+                    </span>
                   ))}
                 </div>
               )}

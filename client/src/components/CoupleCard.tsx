@@ -42,10 +42,15 @@ export function CoupleCard({ couple, onClick, onInterested }: Props) {
     <div className="couple-card" onClick={onClick}>
       <div className="couple-card-header">
         <div className="couple-card-identity">
-          <AvatarPair initials1={couple.initials1} initials2={couple.initials2} />
+          <AvatarPair
+            initials1={couple.initials1}
+            initials2={couple.initials2}
+          />
           <span className="couple-names">{couple.names}</span>
         </div>
-        <span className="pill pill--active pill--sm">{couple.inCommon} in common</span>
+        <span className="pill pill--active pill--sm">
+          {couple.inCommon} in common
+        </span>
       </div>
       <div className="interest-pills">
         {couple.interests.map((interest) => (

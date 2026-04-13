@@ -136,7 +136,9 @@ export default function CoupleProfilePage() {
             <div className="couple-card-header">
               <div className="couple-card-identity">
                 <div className="avatar avatar--md">{initials1}</div>
-                <span className="couple-names">{profile.partner1.display_name}</span>
+                <span className="couple-names">
+                  {profile.partner1.display_name}
+                </span>
               </div>
             </div>
             <p className="discovery-subtitle">
@@ -148,7 +150,9 @@ export default function CoupleProfilePage() {
             {profile.partner1.tags.length > 0 && (
               <div className="interest-pills" style={{ marginTop: 12 }}>
                 {profile.partner1.tags.map((tag) => (
-                  <span key={tag} className="pill pill--sm">{tag}</span>
+                  <span key={tag} className="pill pill--sm">
+                    {tag}
+                  </span>
                 ))}
               </div>
             )}
@@ -157,7 +161,9 @@ export default function CoupleProfilePage() {
             <div className="couple-card-header">
               <div className="couple-card-identity">
                 <div className="avatar avatar--md">{initials2}</div>
-                <span className="couple-names">{profile.partner2.display_name}</span>
+                <span className="couple-names">
+                  {profile.partner2.display_name}
+                </span>
               </div>
             </div>
             <p className="discovery-subtitle">
@@ -169,7 +175,9 @@ export default function CoupleProfilePage() {
             {profile.partner2.tags.length > 0 && (
               <div className="interest-pills" style={{ marginTop: 12 }}>
                 {profile.partner2.tags.map((tag) => (
-                  <span key={tag} className="pill pill--sm">{tag}</span>
+                  <span key={tag} className="pill pill--sm">
+                    {tag}
+                  </span>
                 ))}
               </div>
             )}

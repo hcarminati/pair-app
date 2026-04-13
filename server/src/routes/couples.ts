@@ -178,46 +178,42 @@ couplesRouter.get("/me", verifyToken, async (_req: Request, res: Response) => {
   res.status(200).json(pair);
 });
 
-couplesRouter.patch(
-  "/me",
-  verifyToken,
-  async (req: Request, res: Response) => {
-    const user = res.locals["user"] as { id: string };
-    const { about_us, location } = req.body as {
-      about_us?: string;
-      location?: string;
-    };
+couplesRouter.patch("/me", verifyToken, async (req: Request, res: Response) => {
+  const user = res.locals["user"] as { id: string };
+  const { about_us, location } = req.body as {
+    about_us?: string;
+    location?: string;
+  };
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("partner_id")
-      .eq("id", user.id)
-      .single();
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("partner_id")
+    .eq("id", user.id)
+    .single();
 
-    if (!profile || profile.partner_id == null) {
-      res.status(400).json({ error: "You are not currently paired" });
-      return;
-    }
+  if (!profile || profile.partner_id == null) {
+    res.status(400).json({ error: "You are not currently paired" });
+    return;
+  }
 
-    const updates: Record<string, string> = {};
-    if (about_us !== undefined) updates["about_us"] = about_us;
-    if (location !== undefined) updates["location"] = location;
+  const updates: Record<string, string> = {};
+  if (about_us !== undefined) updates["about_us"] = about_us;
+  if (location !== undefined) updates["location"] = location;
 
-    const { data: pair, error } = await supabase
-      .from("pairs")
-      .update(updates)
-      .or(`profile_id_1.eq.${user.id},profile_id_2.eq.${user.id}`)
-      .select()
-      .single();
+  const { data: pair, error } = await supabase
+    .from("pairs")
+    .update(updates)
+    .or(`profile_id_1.eq.${user.id},profile_id_2.eq.${user.id}`)
+    .select()
+    .single();
 
-    if (error || !pair) {
-      res.status(500).json({ error: "Failed to update couple profile" });
-      return;
-    }
+  if (error || !pair) {
+    res.status(500).json({ error: "Failed to update couple profile" });
+    return;
+  }
 
-    res.status(200).json(pair);
-  },
-);
+  res.status(200).json(pair);
+});
 
 couplesRouter.delete(
   "/link",

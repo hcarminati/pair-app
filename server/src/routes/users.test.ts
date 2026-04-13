@@ -118,12 +118,10 @@ describe("PATCH /users/me/interests", () => {
   it("deduplicates tags after normalization before insert", async () => {
     mockAuthenticatedUser();
 
-    const upsertSelect = vi
-      .fn()
-      .mockResolvedValue({
-        data: [{ id: "t1", label: "hiking" }],
-        error: null,
-      });
+    const upsertSelect = vi.fn().mockResolvedValue({
+      data: [{ id: "t1", label: "hiking" }],
+      error: null,
+    });
     const upsertFn = vi.fn().mockReturnValue({ select: upsertSelect });
     const deleteEq = vi.fn().mockResolvedValue({ error: null });
     const deleteFn = vi.fn().mockReturnValue({ eq: deleteEq });

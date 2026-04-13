@@ -95,7 +95,10 @@ function makeMockFrom({
           or: vi.fn().mockReturnValue({
             single: vi
               .fn()
-              .mockResolvedValue({ data: pair, error: pair ? null : { message: "Not found" } }),
+              .mockResolvedValue({
+                data: pair,
+                error: pair ? null : { message: "Not found" },
+              }),
           }),
         }),
       };

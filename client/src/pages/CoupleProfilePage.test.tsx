@@ -59,7 +59,9 @@ describe("CoupleProfilePage", () => {
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByRole("heading", { name: /Alex.*Jordan/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("heading", { name: /Alex.*Jordan/i }),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -70,7 +72,9 @@ describe("CoupleProfilePage", () => {
     await waitFor(() =>
       expect(screen.getByText("We love adventures")).toBeInTheDocument(),
     );
-    expect(screen.getAllByText("Portland, OR").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Portland, OR").length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   it("renders shared tag in the Interests section and individual tags on partner cards", async () => {
@@ -101,7 +105,9 @@ describe("CoupleProfilePage", () => {
     renderPage();
 
     await waitFor(() =>
-      expect(screen.getByRole("heading", { name: /Alex.*Jordan/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("heading", { name: /Alex.*Jordan/i }),
+      ).toBeInTheDocument(),
     );
 
     const editLink = screen.getByRole("link", { name: /edit couple profile/i });

@@ -18,8 +18,18 @@ function mockPairsResponse(overrides: Record<string, unknown> = {}) {
       pair_id: "pair-id-1",
       about_us: "We love hiking",
       location: "Portland, OR",
-      partner1: { display_name: "Alex Kim", about_me: "Love the outdoors", location: "Portland, OR", tags: ["hiking", "cooking"] },
-      partner2: { display_name: "Jordan Lee", about_me: "Love cooking", location: "Seattle, WA", tags: ["cooking", "yoga"] },
+      partner1: {
+        display_name: "Alex Kim",
+        about_me: "Love the outdoors",
+        location: "Portland, OR",
+        tags: ["hiking", "cooking"],
+      },
+      partner2: {
+        display_name: "Jordan Lee",
+        about_me: "Love cooking",
+        location: "Seattle, WA",
+        tags: ["cooking", "yoga"],
+      },
       tags: ["cooking"],
       ...overrides,
     }),
@@ -53,7 +63,9 @@ describe("CouplePreviewTab", () => {
       expect(screen.getByText("Alex Kim & Jordan Lee")).toBeInTheDocument(),
     );
     // location appears in the card
-    expect(screen.getAllByText("Portland, OR").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Portland, OR").length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   it("renders initials avatars in the card", async () => {
@@ -72,7 +84,9 @@ describe("CouplePreviewTab", () => {
 
     // "We love hiking" appears in both the card preview and the edit textarea
     await waitFor(() =>
-      expect(screen.getAllByText("We love hiking").length).toBeGreaterThanOrEqual(1),
+      expect(
+        screen.getAllByText("We love hiking").length,
+      ).toBeGreaterThanOrEqual(1),
     );
     expect(screen.getAllByText("cooking").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("hiking")).toBeInTheDocument();
@@ -210,7 +224,9 @@ describe("CouplePreviewTab", () => {
 
   it("shows loading state on save button while saving", async () => {
     let resolvePatch!: (v: unknown) => void;
-    const patchPromise = new Promise((r) => { resolvePatch = r; });
+    const patchPromise = new Promise((r) => {
+      resolvePatch = r;
+    });
 
     mockApiFetch
       .mockResolvedValueOnce(mockPairsResponse())

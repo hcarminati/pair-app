@@ -82,10 +82,12 @@ export function LinkPartnerTab({
         <p className="token-hint">You are linked with your partner.</p>
         {confirmingUnlink ? (
           <div className="unlink-confirm">
-            <p className="unlink-confirm-warning">Are you sure you want to unlink?</p>
+            <p className="unlink-confirm-warning">
+              Are you sure you want to unlink?
+            </p>
             <p className="unlink-confirm-detail">
-              Your partner's account will be suspended and all shared connection
-              requests and messages will be permanently deleted.
+              {`Your partner's account will be suspended and all shared connection
+              requests and messages will be permanently deleted.`}
             </p>
             <div className="unlink-confirm-actions">
               <button

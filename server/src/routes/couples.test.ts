@@ -642,7 +642,10 @@ describe("PATCH /couples/me", () => {
     const res = await request(app)
       .patch("/couples/me")
       .set("Authorization", "Bearer valid-jwt")
-      .send({ about_us: "We love hiking and cooking", location: "Seattle, WA" });
+      .send({
+        about_us: "We love hiking and cooking",
+        location: "Seattle, WA",
+      });
 
     expect(res.status).toBe(200);
     expect(res.body.about_us).toBe("We love hiking and cooking");

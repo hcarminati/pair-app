@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import AddInterestsPage from "./AddInterestsPage";
 
 const mockNavigate = vi.fn();
@@ -204,7 +204,7 @@ describe("AddInterestsPage", () => {
 
   it("shows loading state on submit button while request is in flight", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockImplementation(() => new Promise(() => {})); // never resolves
+    mockApiFetch.mockImplementation(() => new Promise(() => { })); // never resolves
 
     renderPage();
     await user.click(screen.getByRole("button", { name: "hiking" }));

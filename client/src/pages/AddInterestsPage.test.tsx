@@ -28,6 +28,10 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockApiFetch.mockResolvedValue({
+    ok: true,
+    json: async () => ({}),
+  } as Response);
 });
 
 describe("AddInterestsPage", () => {
@@ -159,6 +163,26 @@ describe("AddInterestsPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("calls PATCH /users/me/interests with selected tags on submit", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: "hiking" }));
+    await user.click(screen.getByRole("button", { name: "cooking" }));
+    await user.click(screen.getByRole("button", { name: /save & continue/i }));
+
+    expect(mockApiFetch).toHaveBeenCalledWith("/users/me/interests", {
+      method: "PATCH",
+      body: expect.stringContaining('"tags"'),
+    });
+
+    const body = JSON.parse(
+      (mockApiFetch.mock.calls[0] as [string, { body: string }])[1].body,
+    ) as { tags: string[] };
+    expect(body.tags).toContain("hiking");
+    expect(body.tags).toContain("cooking");
+    expect(body.tags).toHaveLength(2);
+  });
+
   it("navigates directly to /profile when no tags are selected", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -204,7 +228,7 @@ describe("AddInterestsPage", () => {
 
   it("shows loading state on submit button while request is in flight", async () => {
     const user = userEvent.setup();
-    mockApiFetch.mockImplementation(() => new Promise(() => { })); // never resolves
+    mockApiFetch.mockImplementation(() => new Promise(() => {})); // never resolves
 
     renderPage();
     await user.click(screen.getByRole("button", { name: "hiking" }));

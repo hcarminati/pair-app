@@ -117,6 +117,13 @@ export default function DiscoveryPage({ isLinked }: Props) {
     ? visibleCouples.find((c) => c.id === selectedId) ?? null
     : null;
 
+  const selectedResult = selectedId
+    ? results.find((r) => r.pair_id === selectedId) ?? null
+    : null;
+  const selectedCouple = selectedId
+    ? visibleCouples.find((c) => c.id === selectedId) ?? null
+    : null;
+
   return (
     <div className="discovery-page">
       <div className="discovery-header">

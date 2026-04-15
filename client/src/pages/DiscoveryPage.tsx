@@ -53,6 +53,9 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [loading, setLoading] = useState(isLinked);
   const [error, setError] = useState<string | null>(null);
   const [activeFilters, setActiveFilters] = useState<string[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [activeLocation, setActiveLocation] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -60,7 +63,13 @@ export default function DiscoveryPage({ isLinked }: Props) {
       return;
     }
 
-    apiFetch("/discovery")
+    const parts: string[] = [];
+    if (activeFilters.length > 0) parts.push(`tags=${activeFilters.join(",")}`);
+    if (activeLocation) parts.push(`location=${encodeURIComponent(activeLocation)}`);
+    const url =
+      parts.length > 0 ? `/discovery?${parts.join("&")}` : "/discovery";
+
+    apiFetch(url)
       .then(async (res) => {
         if (!res.ok) {
           const body = (await res.json()) as { error?: string };
@@ -70,25 +79,36 @@ export default function DiscoveryPage({ isLinked }: Props) {
         const data = (await res.json()) as DiscoveryResult[];
         setResults(data);
         setCouples(data.map(toCouple));
+        if (activeFilters.length === 0 && activeLocation === null) {
+          setAvailableTags([...new Set(data.flatMap((r) => r.tags))]);
+          setAvailableLocations(
+            [
+              ...new Set(
+                data
+                  .map((r) => r.location)
+                  .filter((l): l is string => l !== null),
+              ),
+            ].sort(),
+          );
+        }
       })
       .catch(() => setError("Failed to load discovery feed"))
       .finally(() => setLoading(false));
-  }, [isLinked]);
-
-  const allTags = [...new Set(couples.flatMap((c) => c.interests))];
+  }, [isLinked, activeFilters, activeLocation]);
 
   const toggleFilter = (tag: string) => {
+    setSelectedId(null);
     setActiveFilters((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
 
-  const visibleCouples =
-    activeFilters.length === 0
-      ? couples
-      : couples.filter((c) =>
-          activeFilters.some((f) => c.interests.includes(f)),
-        );
+  const toggleLocation = (loc: string) => {
+    setSelectedId(null);
+    setActiveLocation((prev) => (prev === loc ? null : loc));
+  };
+
+  const visibleCouples = couples;
 
   const selectedResult = selectedId
     ? results.find((r) => r.pair_id === selectedId) ?? null
@@ -120,9 +140,23 @@ export default function DiscoveryPage({ isLinked }: Props) {
         <p className="discovery-subtitle">{error}</p>
       ) : (
         <>
-          {allTags.length > 0 && (
+          {availableLocations.length > 0 && (
             <div className="filter-pills">
-              {allTags.map((tag) => (
+              {availableLocations.map((loc) => (
+                <button
+                  key={loc}
+                  className={`pill${activeLocation === loc ? " pill--active" : ""}`}
+                  onClick={() => toggleLocation(loc)}
+                >
+                  {loc}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {availableTags.length > 0 && (
+            <div className="filter-pills">
+              {availableTags.map((tag) => (
                 <button
                   key={tag}
                   className={`pill${activeFilters.includes(tag) ? " pill--active" : ""}`}
@@ -140,7 +174,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
                 key={couple.id}
                 couple={couple}
                 onClick={() => setSelectedId(couple.id)}
-                onInterested={() => {}}
+                onInterested={() => { }}
               />
             ))}
           </div>

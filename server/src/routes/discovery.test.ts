@@ -315,4 +315,201 @@ describe("GET /discovery", () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
   });
+
+  describe("tag filtering (?tags=...)", () => {
+    const TWO_PAIR_SETUP = {
+      allPairs: [
+        { id: "pair-a", about_us: null, location: "NYC", profile_id_1: "ua1", profile_id_2: "ua2" },
+        { id: "pair-b", about_us: null, location: "LA", profile_id_1: "ub1", profile_id_2: "ub2" },
+      ],
+      candidateProfiles: [
+        { id: "ua1", display_name: "Alice", about_me: null, location: null },
+        { id: "ua2", display_name: "Bob", about_me: null, location: null },
+        { id: "ub1", display_name: "Carol", about_me: null, location: null },
+        { id: "ub2", display_name: "Dan", about_me: null, location: null },
+      ],
+      // pair-a: hiking + cooking; pair-b: hiking only
+      candidateTags: [
+        { user_id: "ua1", tags: { label: "hiking" } },
+        { user_id: "ua2", tags: { label: "cooking" } },
+        { user_id: "ub1", tags: { label: "hiking" } },
+        { user_id: "ub2", tags: { label: "films" } },
+      ],
+    };
+
+    it("single-tag filter returns only couples that have that tag", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?tags=cooking")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-a");
+    });
+
+    it("multi-tag OR filter returns couples that have ANY of the specified tags", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      // pair-a: hiking + cooking; pair-b: hiking + films
+      // ?tags=cooking,films → pair-a has cooking, pair-b has films → both returned
+      const res = await request(app)
+        .get("/discovery?tags=cooking,films")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+    });
+
+    it("empty tags param returns the full unfiltered feed", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(2);
+    });
+
+    it("unknown tag returns empty array (not 404)", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?tags=nonexistenttag")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("filter tags are case-insensitive", async () => {
+      mockAuthUser();
+      setupMocks(TWO_PAIR_SETUP);
+
+      // COOKING matches pair-a; both pairs have hiking so ?tags=COOKING returns only pair-a
+      const res = await request(app)
+        .get("/discovery?tags=COOKING")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-a");
+    });
+  });
+
+  describe("location filtering (?location=...)", () => {
+    const LOCATION_SETUP = {
+      allPairs: [
+        { id: "pair-nyc", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
+        { id: "pair-la", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        { id: "pair-null", about_us: null, location: null, profile_id_1: "uc1", profile_id_2: "uc2" },
+      ],
+      candidateProfiles: [
+        { id: "ua1", display_name: "Alice", about_me: null, location: null },
+        { id: "ua2", display_name: "Bob", about_me: null, location: null },
+        { id: "ub1", display_name: "Carol", about_me: null, location: null },
+        { id: "ub2", display_name: "Dan", about_me: null, location: null },
+        { id: "uc1", display_name: "Eve", about_me: null, location: null },
+        { id: "uc2", display_name: "Frank", about_me: null, location: null },
+      ],
+      candidateTags: [],
+    };
+
+    it("returns only couples whose location includes the search string", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=new york")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-nyc");
+    });
+
+    it("location filter is case-insensitive", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=LOS ANGELES")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-la");
+    });
+
+    it("empty location param returns the full feed", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(3);
+    });
+
+    it("unmatched location returns empty array (not 404)", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=nowhere")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+    });
+
+    it("couples with null location are excluded when a location filter is active", async () => {
+      mockAuthUser();
+      setupMocks(LOCATION_SETUP);
+
+      const res = await request(app)
+        .get("/discovery?location=new")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      const ids = res.body.map((r: { pair_id: string }) => r.pair_id);
+      expect(ids).not.toContain("pair-null");
+    });
+
+    it("location and tag filters combine (both must match)", async () => {
+      mockAuthUser();
+      setupMocks({
+        allPairs: [
+          { id: "pair-nyc-hiker", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
+          { id: "pair-la-hiker", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        ],
+        candidateProfiles: [
+          { id: "ua1", display_name: "Alice", about_me: null, location: null },
+          { id: "ua2", display_name: "Bob", about_me: null, location: null },
+          { id: "ub1", display_name: "Carol", about_me: null, location: null },
+          { id: "ub2", display_name: "Dan", about_me: null, location: null },
+        ],
+        candidateTags: [
+          { user_id: "ua1", tags: { label: "hiking" } },
+          { user_id: "ub1", tags: { label: "hiking" } },
+        ],
+      });
+
+      const res = await request(app)
+        .get("/discovery?location=new york&tags=hiking")
+        .set("Authorization", "Bearer valid-jwt");
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].pair_id).toBe("pair-nyc-hiker");
+    });
+  });
 });

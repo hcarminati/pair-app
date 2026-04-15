@@ -1,5 +1,5 @@
 export interface Couple {
-  id: number;
+  id: string;
   names: string;
   initials1: string;
   initials2: string;
@@ -8,8 +8,6 @@ export interface Couple {
   matching: string[];
   description: string;
   location: string;
-  complete: boolean;
-  connected: boolean;
 }
 
 export function AvatarPair({

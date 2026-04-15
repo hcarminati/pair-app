@@ -5,7 +5,7 @@ import RegisterPage from "./pages/RegisterPage";
 import AddInterestsPage from "./pages/AddInterestsPage";
 import ProfilePage from "./pages/ProfilePage";
 import CoupleProfilePage from "./pages/CoupleProfilePage";
-import DiscoverPage from "./pages/DiscoverPage";
+import DiscoveryPage from "./pages/DiscoveryPage";
 import InboundRequestsPage from "./pages/InboundRequestsPage";
 import PartnerInterestsPage from "./pages/PartnerInterestsPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
@@ -35,7 +35,7 @@ export default function App() {
       {/* Auth + paired — app shell */}
       <Route element={<RequireAuthAndPaired />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<DiscoverPage />} />
+          <Route path="/" element={<DiscoveryPage isLinked={true} />} />
           <Route path="/inbound-requests" element={<InboundRequestsPage />} />
           <Route path="/partner-interests" element={<PartnerInterestsPage />} />
           <Route path="/connections" element={<ConnectionsPage />} />

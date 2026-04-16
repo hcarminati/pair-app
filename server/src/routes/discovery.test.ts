@@ -141,9 +141,7 @@ function setupMocks({
     if (table === "connection_requests") {
       return {
         select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            or: vi.fn().mockResolvedValue({ data: connectedRequests, error: null }),
-          }),
+          or: vi.fn().mockResolvedValue({ data: connectedRequests, error: null }),
         }),
       };
     }
@@ -224,7 +222,7 @@ describe("GET /discovery", () => {
     expect(res.body).toEqual([]);
   });
 
-  it("excludes already-connected couples from results", async () => {
+  it("excludes couples with a CONNECTED request from results", async () => {
     mockAuthUser();
     setupMocks({
       connectedRequests: [
@@ -233,6 +231,49 @@ describe("GET /discovery", () => {
           couple_1_user_b: PARTNER_ID,
           couple_2_user_a: OTHER_USER_A,
           couple_2_user_b: OTHER_USER_B,
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get("/discovery")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("excludes couples with an INTEREST_PENDING request from results", async () => {
+    mockAuthUser();
+    // Same couple, but at the earliest stage of the flow
+    setupMocks({
+      connectedRequests: [
+        {
+          couple_1_user_a: MY_ID,
+          couple_1_user_b: PARTNER_ID,
+          couple_2_user_a: OTHER_USER_A,
+          couple_2_user_b: OTHER_USER_B,
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get("/discovery")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("excludes couple when they are couple_1 (reverse direction) with any request status", async () => {
+    mockAuthUser();
+    setupMocks({
+      connectedRequests: [
+        {
+          couple_1_user_a: OTHER_USER_A,
+          couple_1_user_b: OTHER_USER_B,
+          couple_2_user_a: MY_ID,
+          couple_2_user_b: PARTNER_ID,
         },
       ],
     });

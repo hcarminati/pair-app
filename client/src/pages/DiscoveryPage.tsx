@@ -57,6 +57,21 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const [activeLocation, setActiveLocation] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [interestedPairIds, setInterestedPairIds] = useState<Set<string>>(
+    new Set(),
+  );
+
+  useEffect(() => {
+    if (!isLinked) return;
+    apiFetch("/connections/interests")
+      .then(async (res) => {
+        if (res.ok) {
+          const ids = (await res.json()) as string[];
+          setInterestedPairIds((prev) => new Set([...prev, ...ids]));
+        }
+      })
+      .catch(() => {});
+  }, [isLinked]);
 
   useEffect(() => {
     if (!isLinked) {
@@ -107,6 +122,17 @@ export default function DiscoveryPage({ isLinked }: Props) {
     setSelectedId(null);
     setActiveLocation((prev) => (prev === loc ? null : loc));
   };
+
+  async function handleInterested(pairId: string) {
+    if (interestedPairIds.has(pairId)) return;
+    const res = await apiFetch("/connections/interest", {
+      method: "POST",
+      body: JSON.stringify({ target_pair_id: pairId }),
+    });
+    if (res.ok) {
+      setInterestedPairIds((prev) => new Set([...prev, pairId]));
+    }
+  }
 
   const visibleCouples = couples;
 
@@ -173,8 +199,9 @@ export default function DiscoveryPage({ isLinked }: Props) {
               <CoupleCard
                 key={couple.id}
                 couple={couple}
+                isInterested={interestedPairIds.has(couple.id)}
                 onClick={() => setSelectedId(couple.id)}
-                onInterested={() => { }}
+                onInterested={() => handleInterested(couple.id)}
               />
             ))}
           </div>
@@ -288,8 +315,14 @@ export default function DiscoveryPage({ isLinked }: Props) {
                   </div>
                 </div>
 
-                <button className="btn btn--primary btn--full">
-                  {`I'm interested`}
+                <button
+                  className="btn btn--primary btn--full"
+                  disabled={interestedPairIds.has(selectedResult.pair_id)}
+                  onClick={() => handleInterested(selectedResult.pair_id)}
+                >
+                  {interestedPairIds.has(selectedResult.pair_id)
+                    ? "Interested"
+                    : "I'm interested"}
                 </button>
               </div>
             </div>

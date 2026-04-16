@@ -39,8 +39,12 @@ test.describe.serial("Profiles and Tags", () => {
       await registerUser(pageA, EMAIL_A, "User A");
       await registerUser(pageB, EMAIL_B, "User B");
 
-      await expect(pageA.locator(".token-box")).toBeVisible({ timeout: 10_000 });
-      const inviteToken = (await pageA.locator(".token-box").innerText()).trim();
+      await expect(pageA.locator(".token-box")).toBeVisible({
+        timeout: 10_000,
+      });
+      const inviteToken = (
+        await pageA.locator(".token-box").innerText()
+      ).trim();
 
       await pageB.getByLabel("Partner invite token").fill(inviteToken);
       await pageB.getByRole("button", { name: "Link accounts" }).click();
@@ -77,7 +81,9 @@ test.describe.serial("Profiles and Tags", () => {
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
     await page.getByRole("button", { name: "My profile" }).click();
-    await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Save profile" }),
+    ).toBeVisible({
       timeout: 5_000,
     });
 
@@ -112,7 +118,9 @@ test.describe.serial("Profiles and Tags", () => {
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
     await page.getByRole("button", { name: "My profile" }).click();
-    await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Save profile" }),
+    ).toBeVisible({
       timeout: 5_000,
     });
 
@@ -142,7 +150,9 @@ test.describe.serial("Profiles and Tags", () => {
 
     // Switch to My profile tab and back — CouplePreviewTab remounts and re-fetches
     await page.getByRole("button", { name: "My profile" }).click();
-    await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible({
+    await expect(
+      page.getByRole("button", { name: "Save profile" }),
+    ).toBeVisible({
       timeout: 5_000,
     });
     await page.getByRole("button", { name: "Couple preview" }).click();

@@ -123,7 +123,9 @@ describe("DiscoveryPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /hiking/i }),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -206,8 +208,14 @@ describe("DiscoveryPage", () => {
 
   describe("tag filter bar", () => {
     it("re-fetches from server with ?tags= when a filter pill is clicked", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
 
       render(
         <MemoryRouter>
@@ -216,7 +224,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /hiking/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
@@ -227,8 +237,14 @@ describe("DiscoveryPage", () => {
     });
 
     it("active filter pills have the pill--active class", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
 
       render(
         <MemoryRouter>
@@ -237,7 +253,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /hiking/i }),
+        ).toBeInTheDocument(),
       );
 
       const hikingPill = screen.getByRole("button", { name: /hiking/i });
@@ -246,14 +264,25 @@ describe("DiscoveryPage", () => {
       await userEvent.click(hikingPill);
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toHaveClass("pill--active"),
+        expect(screen.getByRole("button", { name: /hiking/i })).toHaveClass(
+          "pill--active",
+        ),
       );
     });
 
     it("multiple active filters construct a comma-separated ?tags= OR query", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
 
       render(
         <MemoryRouter>
@@ -262,7 +291,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /hiking/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
@@ -272,14 +303,25 @@ describe("DiscoveryPage", () => {
 
       await userEvent.click(screen.getByRole("button", { name: /cycling/i }));
       await waitFor(() =>
-        expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking,cycling"),
+        expect(mockApiFetch).toHaveBeenLastCalledWith(
+          "/discovery?tags=hiking,cycling",
+        ),
       );
     });
 
     it("deselecting a filter re-fetches without that tag", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
 
       render(
         <MemoryRouter>
@@ -288,7 +330,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /hiking/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
@@ -314,14 +358,24 @@ describe("DiscoveryPage", () => {
 
       // FIXTURE has "Denver, CO" and "Portland, OR" as pair locations
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /denver, co/i }),
+        ).toBeInTheDocument(),
       );
-      expect(screen.getByRole("button", { name: /portland, or/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: /portland, or/i }),
+      ).toBeInTheDocument();
     });
 
     it("clicking a location pill re-fetches with that location", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
 
       render(
         <MemoryRouter>
@@ -330,10 +384,14 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /denver, co/i }),
+        ).toBeInTheDocument(),
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /denver, co/i }),
+      );
 
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith(
@@ -343,8 +401,14 @@ describe("DiscoveryPage", () => {
     });
 
     it("active location pill has pill--active class", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
 
       render(
         <MemoryRouter>
@@ -353,7 +417,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /denver, co/i }),
+        ).toBeInTheDocument(),
       );
 
       const pill = screen.getByRole("button", { name: /denver, co/i });
@@ -362,14 +428,25 @@ describe("DiscoveryPage", () => {
       await userEvent.click(pill);
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /denver, co/i })).toHaveClass("pill--active"),
+        expect(screen.getByRole("button", { name: /denver, co/i })).toHaveClass(
+          "pill--active",
+        ),
       );
     });
 
     it("clicking the active location pill deselects it and re-fetches unfiltered", async () => {
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => [FIXTURE[0]] });
-      mockApiFetch.mockResolvedValueOnce({ ok: true, json: async () => FIXTURE });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => [FIXTURE[0]],
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => FIXTURE,
+      });
 
       render(
         <MemoryRouter>
@@ -378,17 +455,23 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /denver, co/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /denver, co/i }),
+        ).toBeInTheDocument(),
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /denver, co/i }),
+      );
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith(
           "/discovery?location=Denver%2C%20CO",
         ),
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /denver, co/i }),
+      );
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery"),
       );
@@ -404,7 +487,9 @@ describe("DiscoveryPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /hiking/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /hiking/i }));
@@ -412,7 +497,9 @@ describe("DiscoveryPage", () => {
         expect(mockApiFetch).toHaveBeenLastCalledWith("/discovery?tags=hiking"),
       );
 
-      await userEvent.click(screen.getByRole("button", { name: /denver, co/i }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /denver, co/i }),
+      );
       await waitFor(() =>
         expect(mockApiFetch).toHaveBeenLastCalledWith(
           "/discovery?tags=hiking&location=Denver%2C%20CO",
@@ -438,7 +525,9 @@ describe("DiscoveryPage", () => {
     await userEvent.click(cards[0].closest(".couple-card")!);
 
     // Per-partner section header
-    expect(screen.getByRole("heading", { name: /partners/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /partners/i }),
+    ).toBeInTheDocument();
     // Partner names appear in the partner cards
     expect(screen.getAllByText("Morgan").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Casey").length).toBeGreaterThan(0);

@@ -65,7 +65,8 @@ export default function DiscoveryPage({ isLinked }: Props) {
 
     const parts: string[] = [];
     if (activeFilters.length > 0) parts.push(`tags=${activeFilters.join(",")}`);
-    if (activeLocation) parts.push(`location=${encodeURIComponent(activeLocation)}`);
+    if (activeLocation)
+      parts.push(`location=${encodeURIComponent(activeLocation)}`);
     const url =
       parts.length > 0 ? `/discovery?${parts.join("&")}` : "/discovery";
 
@@ -111,10 +112,10 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const visibleCouples = couples;
 
   const selectedResult = selectedId
-    ? results.find((r) => r.pair_id === selectedId) ?? null
+    ? (results.find((r) => r.pair_id === selectedId) ?? null)
     : null;
   const selectedCouple = selectedId
-    ? visibleCouples.find((c) => c.id === selectedId) ?? null
+    ? (visibleCouples.find((c) => c.id === selectedId) ?? null)
     : null;
 
   return (
@@ -174,7 +175,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
                 key={couple.id}
                 couple={couple}
                 onClick={() => setSelectedId(couple.id)}
-                onInterested={() => { }}
+                onInterested={() => {}}
               />
             ))}
           </div>

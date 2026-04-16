@@ -29,8 +29,12 @@ test.describe("Partner Linking", () => {
 
       // The "Link partner" tab is active by default for unpaired users.
       // Wait for the invite token to be generated and shown in .token-box.
-      await expect(pageA.locator(".token-box")).toBeVisible({ timeout: 10_000 });
-      const inviteToken = (await pageA.locator(".token-box").innerText()).trim();
+      await expect(pageA.locator(".token-box")).toBeVisible({
+        timeout: 10_000,
+      });
+      const inviteToken = (
+        await pageA.locator(".token-box").innerText()
+      ).trim();
       expect(inviteToken).toBeTruthy();
 
       // ── User B registers and enters User A's token ────────────────────────
@@ -42,12 +46,16 @@ test.describe("Partner Linking", () => {
 
       // User B should be redirected to the discovery page immediately.
       await expect(pageB).toHaveURL("/", { timeout: 10_000 });
-      await expect(pageB.getByRole("heading", { name: "Discover" })).toBeVisible();
+      await expect(
+        pageB.getByRole("heading", { name: "Discover" }),
+      ).toBeVisible();
 
       // User A's ProfilePage polls /auth/me every 3 s and navigates to / when
       // it detects a partnerId. Wait up to 10 s for that redirect.
       await expect(pageA).toHaveURL("/", { timeout: 10_000 });
-      await expect(pageA.getByRole("heading", { name: "Discover" })).toBeVisible();
+      await expect(
+        pageA.getByRole("heading", { name: "Discover" }),
+      ).toBeVisible();
     } finally {
       await contextA.close();
       await contextB.close();

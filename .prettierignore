@@ -13,3 +13,4 @@ tsconfig.*.json
 CLAUDE.md
 README.md
 docs/
+.claude/

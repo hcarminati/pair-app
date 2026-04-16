@@ -1,30 +1,11 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { deleteTestUser } from "./helpers/cleanup";
+import { registerUser, PASSWORD } from "./helpers/register";
 
-const PASSWORD = "Password123!";
 // Unique per run — suffix with index to keep emails distinct within this file
 const TS = Date.now();
 const EMAIL_A = `test_e2e_link_a_${TS}@example.com`;
 const EMAIL_B = `test_e2e_link_b_${TS}@example.com`;
-
-/** Register a new user through all 3 onboarding steps and land on /profile. */
-async function registerUser(
-  page: Page,
-  email: string,
-  displayName: string,
-): Promise<void> {
-  await page.goto("/register");
-  await page.locator("#displayName").fill(displayName);
-  await page.locator("#email").fill(email);
-  await page.locator("#password").fill(PASSWORD);
-  await page.getByRole("button", { name: "Create account" }).click();
-
-  await expect(page).toHaveURL(/\/register\/interests/);
-  await page.getByRole("button", { name: "hiking" }).click();
-  await page.getByRole("button", { name: "Save & continue" }).click();
-
-  await expect(page).toHaveURL(/\/profile/);
-}
 
 test.describe("Partner Linking", () => {
   test.afterAll(async () => {

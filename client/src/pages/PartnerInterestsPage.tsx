@@ -29,17 +29,18 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function toCouple(r: PartnerInterestResult): Couple {
+function toCouple(r: PartnerInterestResult, ownTags: string[]): Couple {
   const p1Name = r.partner1?.display_name ?? "?";
   const p2Name = r.partner2?.display_name ?? "?";
+  const matching = r.tags.filter((t) => ownTags.includes(t));
   return {
     id: r.request_id,
     names: `${p1Name} & ${p2Name}`,
     initials1: getInitials(p1Name),
     initials2: getInitials(p2Name),
-    inCommon: 0,
+    inCommon: matching.length,
     interests: r.tags,
-    matching: [],
+    matching,
     description: r.about_us ?? "",
     location: r.location ?? "",
   };
@@ -47,24 +48,33 @@ function toCouple(r: PartnerInterestResult): Couple {
 
 export default function PartnerInterestsPage() {
   const [results, setResults] = useState<PartnerInterestResult[]>([]);
+  const [ownTags, setOwnTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [alignedIds, setAlignedIds] = useState<Set<string>>(new Set());
   const [vetoedIds, setVetoedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    apiFetch("/connections/partner-interests")
-      .then(async (res) => {
-        if (!res.ok) {
-          const body = (await res.json()) as { error?: string };
-          setError(body.error ?? "Failed to load partner interests");
-          return;
-        }
-        const data = (await res.json()) as PartnerInterestResult[];
-        setResults(data);
-      })
-      .catch(() => setError("Failed to load partner interests"))
-      .finally(() => setLoading(false));
+    const fetchAll = async () => {
+      const [interestsRes, pairRes] = await Promise.all([
+        apiFetch("/connections/partner-interests"),
+        apiFetch("/pairs/me"),
+      ]);
+      if (!interestsRes.ok) {
+        const body = (await interestsRes.json()) as { error?: string };
+        setError(body.error ?? "Failed to load partner interests");
+        setLoading(false);
+        return;
+      }
+      const data = (await interestsRes.json()) as PartnerInterestResult[];
+      setResults(data);
+      if (pairRes.ok) {
+        const pair = (await pairRes.json()) as { tags: string[] };
+        setOwnTags(pair.tags);
+      }
+      setLoading(false);
+    };
+    void fetchAll();
   }, []);
 
   async function handleAlign(requestId: string) {
@@ -87,7 +97,7 @@ export default function PartnerInterestsPage() {
     }
   }
 
-  const couples = results.map(toCouple);
+  const couples = results.map((r) => toCouple(r, ownTags));
 
   return (
     <div className="app-page">

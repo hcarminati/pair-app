@@ -30,17 +30,18 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function toCouple(r: InboundResult): Couple {
+function toCouple(r: InboundResult, ownTags: string[]): Couple {
   const p1Name = r.partner1?.display_name ?? "?";
   const p2Name = r.partner2?.display_name ?? "?";
+  const matching = r.tags.filter((t) => ownTags.includes(t));
   return {
     id: r.request_id,
     names: `${p1Name} & ${p2Name}`,
     initials1: getInitials(p1Name),
     initials2: getInitials(p2Name),
-    inCommon: 0,
+    inCommon: matching.length,
     interests: r.tags,
-    matching: [],
+    matching,
     description: r.about_us ?? "",
     location: r.location ?? "",
   };
@@ -67,6 +68,7 @@ function applyInboundData(
 
 export default function InboundRequestsPage() {
   const [results, setResults] = useState<InboundResult[]>([]);
+  const [ownTags, setOwnTags] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   // Tracks responses made this session, seeded from server on load
@@ -78,17 +80,24 @@ export default function InboundRequestsPage() {
   useEffect(() => {
     let cancelled = false;
     const fetchInitial = async () => {
-      const res = await apiFetch("/connections/inbound");
+      const [inboundRes, pairRes] = await Promise.all([
+        apiFetch("/connections/inbound"),
+        apiFetch("/pairs/me"),
+      ]);
       if (cancelled) return;
-      if (!res.ok) {
-        const body = (await res.json()) as { error?: string };
+      if (!inboundRes.ok) {
+        const body = (await inboundRes.json()) as { error?: string };
         setError(body.error ?? "Failed to load inbound requests");
-        if (res.status === 401) setResponses(new Map());
+        if (inboundRes.status === 401) setResponses(new Map());
         setLoading(false);
         return;
       }
-      const data = (await res.json()) as InboundResult[];
+      const data = (await inboundRes.json()) as InboundResult[];
       applyInboundData(data, setResults, setResponses);
+      if (pairRes.ok) {
+        const pair = (await pairRes.json()) as { tags: string[] };
+        setOwnTags(pair.tags);
+      }
       setLoading(false);
     };
     void fetchInitial();
@@ -132,7 +141,7 @@ export default function InboundRequestsPage() {
     }
   }
 
-  const couples = results.map(toCouple);
+  const couples = results.map((r) => toCouple(r, ownTags));
 
   return (
     <div className="app-page">

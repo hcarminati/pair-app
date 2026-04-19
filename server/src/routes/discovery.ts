@@ -221,8 +221,7 @@ discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
   const filtered = results
     .filter(
       (r) =>
-        filterTags.length === 0 ||
-        filterTags.some((ft) => r.tags.includes(ft)),
+        filterTags.length === 0 || filterTags.some((ft) => r.tags.includes(ft)),
     )
     .filter(
       (r) =>

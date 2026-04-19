@@ -126,7 +126,9 @@ function setupInterestMocks({
     if (table === "connection_requests") {
       return {
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({ data: existingRequests, error: null }),
+          or: vi
+            .fn()
+            .mockResolvedValue({ data: existingRequests, error: null }),
         }),
         insert: vi.fn().mockReturnValue({
           select: vi.fn().mockReturnValue({
@@ -188,11 +190,11 @@ describe("POST /connections/interest", () => {
     });
     expect(participantsMock).toBeDefined();
 
-    const insertArg =
-      participantsMock?.value.insert.mock.calls[0]?.[0] as Array<{
-        user_id: string;
-        interested: boolean;
-      }>;
+    const insertArg = participantsMock?.value.insert.mock
+      .calls[0]?.[0] as Array<{
+      user_id: string;
+      interested: boolean;
+    }>;
     const initiator = insertArg?.find((p) => p.user_id === USER_ID);
     expect(initiator?.interested).toBe(true);
     const partner = insertArg?.find((p) => p.user_id === PARTNER_ID);
@@ -891,7 +893,9 @@ function setupInboundMocks({
         // heal check: select(...).in("request_id", ...)
         return {
           select: vi.fn().mockReturnValue({
-            in: vi.fn().mockResolvedValue({ data: c2Participants, error: null }),
+            in: vi
+              .fn()
+              .mockResolvedValue({ data: c2Participants, error: null }),
           }),
         };
       }
@@ -1124,8 +1128,18 @@ describe("GET /connections/connected", () => {
     setupConnectedMocks({
       allRequests: [CONNECTED_REQUEST],
       profiles: [
-        { id: TARGET_USER_A, display_name: "Carol", about_me: null, location: "NYC" },
-        { id: TARGET_USER_B, display_name: "Dave", about_me: null, location: "NYC" },
+        {
+          id: TARGET_USER_A,
+          display_name: "Carol",
+          about_me: null,
+          location: "NYC",
+        },
+        {
+          id: TARGET_USER_B,
+          display_name: "Dave",
+          about_me: null,
+          location: "NYC",
+        },
       ],
     });
 
@@ -1146,8 +1160,18 @@ describe("GET /connections/connected", () => {
     setupConnectedMocks({
       allRequests: [CONNECTED_REQUEST],
       profiles: [
-        { id: TARGET_USER_A, display_name: "Carol", about_me: null, location: null },
-        { id: TARGET_USER_B, display_name: "Dave", about_me: null, location: null },
+        {
+          id: TARGET_USER_A,
+          display_name: "Carol",
+          about_me: null,
+          location: null,
+        },
+        {
+          id: TARGET_USER_B,
+          display_name: "Dave",
+          about_me: null,
+          location: null,
+        },
       ],
     });
 
@@ -1157,7 +1181,10 @@ describe("GET /connections/connected", () => {
 
     expect(res.status).toBe(200);
     // partner1/partner2 should reflect the OTHER couple (Carol & Dave), not the current user
-    const names = [res.body[0].partner1?.display_name, res.body[0].partner2?.display_name];
+    const names = [
+      res.body[0].partner1?.display_name,
+      res.body[0].partner2?.display_name,
+    ];
     expect(names).toContain("Carol");
     expect(names).toContain("Dave");
   });

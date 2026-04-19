@@ -93,12 +93,10 @@ function setupMocks({
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              single: vi
-                .fn()
-                .mockResolvedValue({
-                  data: profiles,
-                  error: profiles ? null : { message: "Not found" },
-                }),
+              single: vi.fn().mockResolvedValue({
+                data: profiles,
+                error: profiles ? null : { message: "Not found" },
+              }),
             }),
           }),
         };
@@ -120,12 +118,10 @@ function setupMocks({
         return {
           select: vi.fn().mockReturnValue({
             or: vi.fn().mockReturnValue({
-              single: vi
-                .fn()
-                .mockResolvedValue({
-                  data: myPair,
-                  error: myPair ? null : { message: "Not found" },
-                }),
+              single: vi.fn().mockResolvedValue({
+                data: myPair,
+                error: myPair ? null : { message: "Not found" },
+              }),
             }),
           }),
         };
@@ -159,7 +155,9 @@ function setupMocks({
     if (table === "connection_requests") {
       return {
         select: vi.fn().mockReturnValue({
-          or: vi.fn().mockResolvedValue({ data: connectedRequests, error: null }),
+          or: vi
+            .fn()
+            .mockResolvedValue({ data: connectedRequests, error: null }),
         }),
       };
     }

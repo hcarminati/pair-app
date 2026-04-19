@@ -70,9 +70,7 @@ connectionsRouter.get(
     //    status in application code (avoids .or() + .eq() chaining issues)
     const { data: allCouple1Requests } = await supabase
       .from("connection_requests")
-      .select(
-        "id, couple_2_user_a, couple_2_user_b, created_at, status",
-      )
+      .select("id, couple_2_user_a, couple_2_user_b, created_at, status")
       .or(`couple_1_user_a.eq.${user.id},couple_1_user_b.eq.${user.id}`);
 
     const requests = (allCouple1Requests ?? []).filter(
@@ -248,7 +246,9 @@ connectionsRouter.post(
     }
 
     if (request.status !== "INTEREST_PENDING") {
-      res.status(400).json({ error: "Request is not in INTEREST_PENDING status" });
+      res
+        .status(400)
+        .json({ error: "Request is not in INTEREST_PENDING status" });
       return;
     }
 
@@ -807,7 +807,9 @@ connectionsRouter.post(
     }
 
     if (request.status !== "INTEREST_PENDING") {
-      res.status(400).json({ error: "Request is not in INTEREST_PENDING status" });
+      res
+        .status(400)
+        .json({ error: "Request is not in INTEREST_PENDING status" });
       return;
     }
 

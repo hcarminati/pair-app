@@ -847,6 +847,146 @@ describe("GET /connections/interests", () => {
   });
 });
 
+// ─── GET /connections/partner-interests ───────────────────────────────────────
+
+const PARTNER_INTEREST_REQUEST = {
+  id: REQUEST_ID,
+  couple_2_user_a: TARGET_USER_A,
+  couple_2_user_b: TARGET_USER_B,
+  created_at: "2026-01-01T00:00:00Z",
+  status: "INTEREST_PENDING",
+};
+
+type PartnerInterestsMockOptions = {
+  couple1Requests?: Record<string, unknown>[];
+  myParticipantRows?: Record<string, unknown>[];
+  profiles?: Record<string, unknown>[];
+  tagRows?: Record<string, unknown>[];
+  pairs?: Record<string, unknown>[];
+};
+
+function setupPartnerInterestsMocks({
+  couple1Requests = [],
+  myParticipantRows = [],
+  profiles = [],
+  tagRows = [],
+  pairs = [],
+}: PartnerInterestsMockOptions = {}) {
+  mockFrom.mockImplementation((table: string) => {
+    if (table === "connection_requests") {
+      return {
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockResolvedValue({ data: couple1Requests, error: null }),
+        }),
+      };
+    }
+    if (table === "connection_request_participants") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockReturnValue({
+            eq: vi
+              .fn()
+              .mockResolvedValue({ data: myParticipantRows, error: null }),
+          }),
+        }),
+      };
+    }
+    if (table === "profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({ data: profiles, error: null }),
+        }),
+      };
+    }
+    if (table === "user_tags") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({ data: tagRows, error: null }),
+        }),
+      };
+    }
+    if (table === "pairs") {
+      return {
+        select: vi.fn().mockReturnValue({
+          or: vi.fn().mockResolvedValue({ data: pairs, error: null }),
+        }),
+      };
+    }
+  });
+}
+
+describe("GET /connections/partner-interests", () => {
+  it("returns empty array when there are no pending partner interests", async () => {
+    mockAuthenticatedUser();
+    setupPartnerInterestsMocks({ couple1Requests: [] });
+
+    const res = await request(app)
+      .get("/connections/partner-interests")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("returns requests where partner has interested=true and current user has interested=false", async () => {
+    mockAuthenticatedUser();
+    setupPartnerInterestsMocks({
+      couple1Requests: [PARTNER_INTEREST_REQUEST],
+      myParticipantRows: [{ request_id: REQUEST_ID, interested: false }],
+      profiles: [
+        {
+          id: TARGET_USER_A,
+          display_name: "Alice",
+          about_me: null,
+          location: null,
+        },
+        {
+          id: TARGET_USER_B,
+          display_name: "Bob",
+          about_me: null,
+          location: null,
+        },
+      ],
+      tagRows: [],
+      pairs: [],
+    });
+
+    const res = await request(app)
+      .get("/connections/partner-interests")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].request_id).toBe(REQUEST_ID);
+    expect(res.body[0]).toHaveProperty("partner1");
+    expect(res.body[0]).toHaveProperty("partner2");
+    expect(res.body[0]).toHaveProperty("tags");
+  });
+
+  it("excludes requests where current user is the initiator (interested=true)", async () => {
+    mockAuthenticatedUser();
+    setupPartnerInterestsMocks({
+      couple1Requests: [PARTNER_INTEREST_REQUEST],
+      myParticipantRows: [{ request_id: REQUEST_ID, interested: true }],
+    });
+
+    const res = await request(app)
+      .get("/connections/partner-interests")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual([]);
+  });
+
+  it("returns 401 when not authenticated", async () => {
+    mockUnauthenticated();
+
+    const res = await request(app).get("/connections/partner-interests");
+
+    expect(res.status).toBe(401);
+  });
+});
+
 // ─── GET /connections/inbound ─────────────────────────────────────────────────
 
 type InboundMockOptions = {
@@ -985,7 +1125,7 @@ describe("GET /connections/inbound", () => {
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(1);
     expect(res.body[0].request_id).toBe(REQUEST_ID);
-    expect(res.body[0]).toHaveProperty("my_response");
+    expect(res.body[0].my_response).toBeNull();
     expect(res.body[0]).toHaveProperty("partner1");
     expect(res.body[0]).toHaveProperty("partner2");
     expect(res.body[0]).toHaveProperty("tags");

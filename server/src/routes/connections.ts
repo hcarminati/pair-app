@@ -508,10 +508,9 @@ connectionsRouter.get(
             }
           : null,
         created_at: r.created_at as string,
-        // null = not yet responded, true = accepted, false = declined
-        my_response: myResponseMap.has(r.id as string)
-          ? myResponseMap.get(r.id as string)!
-          : null,
+        // null = not yet responded, true = accepted
+        // (false is never meaningful here — declined requests are excluded by status filter)
+        my_response: myResponseMap.get(r.id as string) === true ? true : null,
       };
     });
 

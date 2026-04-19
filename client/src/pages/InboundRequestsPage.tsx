@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { CoupleCard } from "../components/CoupleCard";
 import type { Couple } from "../components/CoupleCard";
 import { apiFetch } from "../lib/api";
@@ -46,6 +46,25 @@ function toCouple(r: InboundResult): Couple {
   };
 }
 
+function applyInboundData(
+  data: InboundResult[],
+  setResults: React.Dispatch<React.SetStateAction<InboundResult[]>>,
+  setResponses: React.Dispatch<
+    React.SetStateAction<Map<string, boolean | null>>
+  >,
+) {
+  setResults(data);
+  setResponses((prev) => {
+    const next = new Map(prev);
+    for (const r of data) {
+      if (!next.has(r.request_id)) {
+        next.set(r.request_id, r.my_response);
+      }
+    }
+    return next;
+  });
+}
+
 export default function InboundRequestsPage() {
   const [results, setResults] = useState<InboundResult[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,36 +75,26 @@ export default function InboundRequestsPage() {
   );
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
 
-  const loadInbound = async (isInitial = false) => {
-    const res = await apiFetch("/connections/inbound");
-    if (!res.ok) {
-      if (isInitial) {
+  useEffect(() => {
+    let cancelled = false;
+    const fetchInitial = async () => {
+      const res = await apiFetch("/connections/inbound");
+      if (cancelled) return;
+      if (!res.ok) {
         const body = (await res.json()) as { error?: string };
         setError(body.error ?? "Failed to load inbound requests");
+        if (res.status === 401) setResponses(new Map());
+        setLoading(false);
+        return;
       }
-      if (res.status === 401) {
-        // Auth expired — stop polling by clearing waiting state
-        setResponses(new Map());
-      }
-      return;
-    }
-    const data = (await res.json()) as InboundResult[];
-    setResults(data);
-    setResponses((prev) => {
-      const next = new Map(prev);
-      for (const r of data) {
-        // Only seed from server if we haven't set a local value
-        if (!next.has(r.request_id)) {
-          next.set(r.request_id, r.my_response);
-        }
-      }
-      return next;
-    });
-    if (isInitial) setLoading(false);
-  };
-
-  useEffect(() => {
-    void loadInbound(true);
+      const data = (await res.json()) as InboundResult[];
+      applyInboundData(data, setResults, setResponses);
+      setLoading(false);
+    };
+    void fetchInitial();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Poll every 3 seconds while any request is in the "waiting" state
@@ -93,7 +102,16 @@ export default function InboundRequestsPage() {
   const hasWaiting = [...responses.values()].some((v) => v === true);
   useEffect(() => {
     if (!hasWaiting) return;
-    const interval = setInterval(() => void loadInbound(), 3000);
+    const poll = async () => {
+      const res = await apiFetch("/connections/inbound");
+      if (!res.ok) {
+        if (res.status === 401) setResponses(new Map());
+        return;
+      }
+      const data = (await res.json()) as InboundResult[];
+      applyInboundData(data, setResults, setResponses);
+    };
+    const interval = setInterval(() => void poll(), 3000);
     return () => clearInterval(interval);
   }, [hasWaiting]);
 

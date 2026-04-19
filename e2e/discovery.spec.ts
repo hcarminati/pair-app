@@ -84,8 +84,12 @@ test.describe.serial("Discovery Feed", () => {
         timeout: 5_000,
       });
 
+      const coupleDataLoaded = page.waitForResponse(
+        (resp) => resp.url().includes("/pairs/me") && resp.status() === 200,
+      );
       await page.getByRole("button", { name: "Couple preview" }).click();
       await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+      await coupleDataLoaded;
       await page.locator("#aboutUs").fill(ABOUT_US);
       await page.locator("#coupleLocation").fill(LOCATION);
       await page.getByRole("button", { name: "Save couple profile" }).click();

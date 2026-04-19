@@ -125,10 +125,11 @@ test.describe.serial("Profiles and Tags", () => {
     });
 
     // hiking (registration) + board games + cooking + mountainbiking = 4 selected
-    await expect(page.locator("button.tag--selected")).toHaveCount(4);
+    // Wait for mountainbiking specifically to confirm the async tag fetch has settled
     await expect(
       page.locator("button.tag--selected", { hasText: "mountainbiking" }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("button.tag--selected")).toHaveCount(4);
   });
 
   test("user edits about_us and couple location and they persist", async ({

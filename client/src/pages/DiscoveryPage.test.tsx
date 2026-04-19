@@ -123,7 +123,9 @@ describe("DiscoveryPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /hiking/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /hiking/i }),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -438,7 +440,9 @@ describe("DiscoveryPage", () => {
     await userEvent.click(cards[0].closest(".couple-card")!);
 
     // Per-partner section header
-    expect(screen.getByRole("heading", { name: /partners/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /partners/i }),
+    ).toBeInTheDocument();
     // Partner names appear in the partner cards
     expect(screen.getAllByText("Morgan").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Casey").length).toBeGreaterThan(0);

@@ -137,10 +137,10 @@ export default function DiscoveryPage({ isLinked }: Props) {
   const visibleCouples = couples;
 
   const selectedResult = selectedId
-    ? results.find((r) => r.pair_id === selectedId) ?? null
+    ? (results.find((r) => r.pair_id === selectedId) ?? null)
     : null;
   const selectedCouple = selectedId
-    ? visibleCouples.find((c) => c.id === selectedId) ?? null
+    ? (visibleCouples.find((c) => c.id === selectedId) ?? null)
     : null;
 
   return (

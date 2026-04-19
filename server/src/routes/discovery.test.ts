@@ -62,8 +62,18 @@ function setupMocks({
     },
   ],
   candidateProfiles = [
-    { id: OTHER_USER_A, display_name: "Alex", about_me: "Love hiking", location: "Denver, CO" },
-    { id: OTHER_USER_B, display_name: "Jordan", about_me: "Love cooking", location: "Portland, OR" },
+    {
+      id: OTHER_USER_A,
+      display_name: "Alex",
+      about_me: "Love hiking",
+      location: "Denver, CO",
+    },
+    {
+      id: OTHER_USER_B,
+      display_name: "Jordan",
+      about_me: "Love cooking",
+      location: "Portland, OR",
+    },
   ],
   candidateTags = [
     { user_id: OTHER_USER_A, tags: { label: "hiking" } },
@@ -85,7 +95,10 @@ function setupMocks({
             eq: vi.fn().mockReturnValue({
               single: vi
                 .fn()
-                .mockResolvedValue({ data: profiles, error: profiles ? null : { message: "Not found" } }),
+                .mockResolvedValue({
+                  data: profiles,
+                  error: profiles ? null : { message: "Not found" },
+                }),
             }),
           }),
         };
@@ -93,7 +106,9 @@ function setupMocks({
       // 2nd call: batch profile fetch for candidates
       return {
         select: vi.fn().mockReturnValue({
-          in: vi.fn().mockResolvedValue({ data: candidateProfiles, error: null }),
+          in: vi
+            .fn()
+            .mockResolvedValue({ data: candidateProfiles, error: null }),
         }),
       };
     }
@@ -107,7 +122,10 @@ function setupMocks({
             or: vi.fn().mockReturnValue({
               single: vi
                 .fn()
-                .mockResolvedValue({ data: myPair, error: myPair ? null : { message: "Not found" } }),
+                .mockResolvedValue({
+                  data: myPair,
+                  error: myPair ? null : { message: "Not found" },
+                }),
             }),
           }),
         };
@@ -166,7 +184,10 @@ describe("GET /discovery", () => {
   });
 
   it("returns 401 when not authenticated", async () => {
-    mockAuth.getUser.mockResolvedValue({ data: { user: null }, error: { message: "Unauthorized" } });
+    mockAuth.getUser.mockResolvedValue({
+      data: { user: null },
+      error: { message: "Unauthorized" },
+    });
 
     const res = await request(app).get("/discovery");
 
@@ -177,8 +198,20 @@ describe("GET /discovery", () => {
     mockAuthUser();
     setupMocks({
       allPairs: [
-        { id: "pair-a", about_us: null, location: "NYC", profile_id_1: "ua1", profile_id_2: "ua2" },
-        { id: "pair-b", about_us: null, location: "LA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        {
+          id: "pair-a",
+          about_us: null,
+          location: "NYC",
+          profile_id_1: "ua1",
+          profile_id_2: "ua2",
+        },
+        {
+          id: "pair-b",
+          about_us: null,
+          location: "LA",
+          profile_id_1: "ub1",
+          profile_id_2: "ub2",
+        },
       ],
       candidateProfiles: [
         { id: "ua1", display_name: "Alice", about_me: null, location: null },
@@ -202,7 +235,9 @@ describe("GET /discovery", () => {
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body[0].shared_count).toBeGreaterThanOrEqual(res.body[1].shared_count);
+    expect(res.body[0].shared_count).toBeGreaterThanOrEqual(
+      res.body[1].shared_count,
+    );
     expect(res.body[0].pair_id).toBe("pair-a");
   });
 
@@ -341,7 +376,9 @@ describe("GET /discovery", () => {
       .set("Authorization", "Bearer valid-jwt");
 
     expect(res.status).toBe(200);
-    expect(res.body[0].matching_tags).toEqual(expect.arrayContaining(["hiking", "cooking"]));
+    expect(res.body[0].matching_tags).toEqual(
+      expect.arrayContaining(["hiking", "cooking"]),
+    );
     expect(res.body[0].shared_count).toBe(2);
   });
 
@@ -360,8 +397,20 @@ describe("GET /discovery", () => {
   describe("tag filtering (?tags=...)", () => {
     const TWO_PAIR_SETUP = {
       allPairs: [
-        { id: "pair-a", about_us: null, location: "NYC", profile_id_1: "ua1", profile_id_2: "ua2" },
-        { id: "pair-b", about_us: null, location: "LA", profile_id_1: "ub1", profile_id_2: "ub2" },
+        {
+          id: "pair-a",
+          about_us: null,
+          location: "NYC",
+          profile_id_1: "ua1",
+          profile_id_2: "ua2",
+        },
+        {
+          id: "pair-b",
+          about_us: null,
+          location: "LA",
+          profile_id_1: "ub1",
+          profile_id_2: "ub2",
+        },
       ],
       candidateProfiles: [
         { id: "ua1", display_name: "Alice", about_me: null, location: null },
@@ -447,9 +496,27 @@ describe("GET /discovery", () => {
   describe("location filtering (?location=...)", () => {
     const LOCATION_SETUP = {
       allPairs: [
-        { id: "pair-nyc", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
-        { id: "pair-la", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
-        { id: "pair-null", about_us: null, location: null, profile_id_1: "uc1", profile_id_2: "uc2" },
+        {
+          id: "pair-nyc",
+          about_us: null,
+          location: "New York, NY",
+          profile_id_1: "ua1",
+          profile_id_2: "ua2",
+        },
+        {
+          id: "pair-la",
+          about_us: null,
+          location: "Los Angeles, CA",
+          profile_id_1: "ub1",
+          profile_id_2: "ub2",
+        },
+        {
+          id: "pair-null",
+          about_us: null,
+          location: null,
+          profile_id_1: "uc1",
+          profile_id_2: "uc2",
+        },
       ],
       candidateProfiles: [
         { id: "ua1", display_name: "Alice", about_me: null, location: null },
@@ -529,8 +596,20 @@ describe("GET /discovery", () => {
       mockAuthUser();
       setupMocks({
         allPairs: [
-          { id: "pair-nyc-hiker", about_us: null, location: "New York, NY", profile_id_1: "ua1", profile_id_2: "ua2" },
-          { id: "pair-la-hiker", about_us: null, location: "Los Angeles, CA", profile_id_1: "ub1", profile_id_2: "ub2" },
+          {
+            id: "pair-nyc-hiker",
+            about_us: null,
+            location: "New York, NY",
+            profile_id_1: "ua1",
+            profile_id_2: "ua2",
+          },
+          {
+            id: "pair-la-hiker",
+            about_us: null,
+            location: "Los Angeles, CA",
+            profile_id_1: "ub1",
+            profile_id_2: "ub2",
+          },
         ],
         candidateProfiles: [
           { id: "ua1", display_name: "Alice", about_me: null, location: null },

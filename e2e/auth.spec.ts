@@ -45,7 +45,10 @@ test.describe("Auth Flows", () => {
   });
 
   test("logs in with valid credentials", async ({ page }) => {
-    test.skip(!EXISTING_EMAIL || !EXISTING_PASSWORD, "TEST_USER_EMAIL / TEST_USER_PASSWORD not set");
+    test.skip(
+      !EXISTING_EMAIL || !EXISTING_PASSWORD,
+      "TEST_USER_EMAIL / TEST_USER_PASSWORD not set",
+    );
 
     await page.locator("#email").fill(EXISTING_EMAIL!);
     await page.locator("#password").fill(EXISTING_PASSWORD!);

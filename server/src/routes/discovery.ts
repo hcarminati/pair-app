@@ -76,14 +76,8 @@ discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
   const connectedUserIds = new Set<string>();
   const myIds = new Set([user.id, partnerId]);
   for (const req of connectedRequests ?? []) {
-    const c1 = [
-      req.couple_1_user_a as string,
-      req.couple_1_user_b as string,
-    ];
-    const c2 = [
-      req.couple_2_user_a as string,
-      req.couple_2_user_b as string,
-    ];
+    const c1 = [req.couple_1_user_a as string, req.couple_1_user_b as string];
+    const c2 = [req.couple_2_user_a as string, req.couple_2_user_b as string];
     if (c1.some((id) => myIds.has(id))) {
       c2.forEach((id) => connectedUserIds.add(id));
     } else {

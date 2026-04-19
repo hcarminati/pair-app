@@ -93,12 +93,10 @@ function makeMockFrom({
       return {
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockReturnValue({
-            single: vi
-              .fn()
-              .mockResolvedValue({
-                data: pair,
-                error: pair ? null : { message: "Not found" },
-              }),
+            single: vi.fn().mockResolvedValue({
+              data: pair,
+              error: pair ? null : { message: "Not found" },
+            }),
           }),
         }),
       };

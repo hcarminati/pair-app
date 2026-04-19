@@ -80,12 +80,14 @@ test.describe.serial("Profiles and Tags", () => {
     // Switch to another tab and back — unmount/remount triggers a fresh DB fetch
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+    const profileLoaded = page.waitForResponse(
+      (resp) => resp.url().includes("/profiles/me"),
+    );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
       page.getByRole("button", { name: "Save profile" }),
-    ).toBeVisible({
-      timeout: 5_000,
-    });
+    ).toBeVisible({ timeout: 5_000 });
+    expect((await profileLoaded).status()).toBe(200);
 
     await expect(page.locator("#displayName")).toHaveValue("Updated User A");
     await expect(page.locator("#aboutMe")).toHaveValue(
@@ -117,18 +119,16 @@ test.describe.serial("Profiles and Tags", () => {
     // Switch tabs to trigger a fresh DB fetch on remount
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+    const profileLoaded = page.waitForResponse(
+      (resp) => resp.url().includes("/profiles/me"),
+    );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
       page.getByRole("button", { name: "Save profile" }),
-    ).toBeVisible({
-      timeout: 5_000,
-    });
+    ).toBeVisible({ timeout: 5_000 });
+    expect((await profileLoaded).status()).toBe(200);
 
     // hiking (registration) + board games + cooking + mountainbiking = 4 selected
-    // Wait for mountainbiking specifically to confirm the async tag fetch has settled
-    await expect(
-      page.locator("button.tag--selected", { hasText: "mountainbiking" }),
-    ).toBeVisible({ timeout: 10_000 });
     await expect(page.locator("button.tag--selected")).toHaveCount(4);
   });
 
@@ -138,8 +138,12 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
+    const coupleDataLoaded1 = page.waitForResponse(
+      (resp) => resp.url().includes("/pairs/me"),
+    );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+    expect((await coupleDataLoaded1).status()).toBe(200);
 
     await page.locator("#aboutUs").fill("We love outdoor adventures.");
     await page.locator("#coupleLocation").fill("Portland, OR");
@@ -153,11 +157,13 @@ test.describe.serial("Profiles and Tags", () => {
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
       page.getByRole("button", { name: "Save profile" }),
-    ).toBeVisible({
-      timeout: 5_000,
-    });
+    ).toBeVisible({ timeout: 5_000 });
+    const coupleDataLoaded2 = page.waitForResponse(
+      (resp) => resp.url().includes("/pairs/me"),
+    );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+    expect((await coupleDataLoaded2).status()).toBe(200);
 
     // Edit form pre-populates from the fresh DB fetch
     await expect(page.locator("#aboutUs")).toHaveValue(
@@ -180,8 +186,12 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
+    const coupleDataLoaded = page.waitForResponse(
+      (resp) => resp.url().includes("/pairs/me"),
+    );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
+    expect((await coupleDataLoaded).status()).toBe(200);
 
     // Preview card heading shows both partners (User A's name updated in test 1)
     await expect(page.locator(".couple-card--static h2")).toContainText(

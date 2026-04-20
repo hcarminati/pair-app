@@ -158,7 +158,7 @@ export default function PartnerInterestsPage() {
                 couple={couple}
                 showCta={false}
                 onClick={() => setSelectedId(couple.id)}
-                onInterested={() => {}}
+                onInterested={() => { }}
               />
               <div className="inbound-actions">
                 {alignedIds.has(couple.id) ? (
@@ -197,7 +197,7 @@ export default function PartnerInterestsPage() {
           couple={selectedCouple}
           isInterested={false}
           onClose={() => setSelectedId(null)}
-          onInterested={() => {}}
+          onInterested={() => { }}
           hideCta
         />
       )}

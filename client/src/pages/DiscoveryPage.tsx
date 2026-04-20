@@ -54,7 +54,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
           setInterestedPairIds((prev) => new Set([...prev, ...ids]));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [isLinked]);
 
   useEffect(() => {

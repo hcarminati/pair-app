@@ -189,19 +189,19 @@ connectionsRouter.get(
         tags: allTags,
         partner1: profileA
           ? {
-              display_name: profileA.display_name,
-              about_me: profileA.about_me,
-              location: profileA.location,
-              tags: tagsA,
-            }
+            display_name: profileA.display_name,
+            about_me: profileA.about_me,
+            location: profileA.location,
+            tags: tagsA,
+          }
           : null,
         partner2: profileB
           ? {
-              display_name: profileB.display_name,
-              about_me: profileB.about_me,
-              location: profileB.location,
-              tags: tagsB,
-            }
+            display_name: profileB.display_name,
+            about_me: profileB.about_me,
+            location: profileB.location,
+            tags: tagsB,
+          }
           : null,
         created_at: r.created_at as string,
       };
@@ -493,19 +493,19 @@ connectionsRouter.get(
         tags: allTags,
         partner1: profileA
           ? {
-              display_name: profileA.display_name,
-              about_me: profileA.about_me,
-              location: profileA.location,
-              tags: tagsA,
-            }
+            display_name: profileA.display_name,
+            about_me: profileA.about_me,
+            location: profileA.location,
+            tags: tagsA,
+          }
           : null,
         partner2: profileB
           ? {
-              display_name: profileB.display_name,
-              about_me: profileB.about_me,
-              location: profileB.location,
-              tags: tagsB,
-            }
+            display_name: profileB.display_name,
+            about_me: profileB.about_me,
+            location: profileB.location,
+            tags: tagsB,
+          }
           : null,
         created_at: r.created_at as string,
         // null = not yet responded, true = accepted
@@ -782,19 +782,19 @@ connectionsRouter.get(
         tags: allTags,
         partner1: profileA
           ? {
-              display_name: profileA.display_name,
-              about_me: profileA.about_me,
-              location: profileA.location,
-              tags: tagsA,
-            }
+            display_name: profileA.display_name,
+            about_me: profileA.about_me,
+            location: profileA.location,
+            tags: tagsA,
+          }
           : null,
         partner2: profileB
           ? {
-              display_name: profileB.display_name,
-              about_me: profileB.about_me,
-              location: profileB.location,
-              tags: tagsB,
-            }
+            display_name: profileB.display_name,
+            about_me: profileB.about_me,
+            location: profileB.location,
+            tags: tagsB,
+          }
           : null,
         created_at: r.created_at as string,
         latest_message: latestMessageByRequest.get(r.id as string) ?? null,

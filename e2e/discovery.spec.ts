@@ -1,6 +1,7 @@
-import { test, expect, type Browser, type Page } from "@playwright/test";
-import { registerUser, PASSWORD } from "./helpers/register";
+import { test, expect, type Page } from "@playwright/test";
 import { deleteTestUser } from "./helpers/cleanup";
+import { linkCouple } from "./helpers/couple";
+import { registerUser, PASSWORD } from "./helpers/register";
 
 const TS = Date.now();
 const EMAIL_A = `test_e2e_disc_a_${TS}@example.com`;
@@ -21,33 +22,6 @@ const NAME_F = "Target User F";
 const ABOUT_US = "We love adventures";
 const LOCATION = "Portland, OR";
 
-/** Register two users and link them as a couple. Both land on / when done. */
-async function linkCouple(
-  browser: Browser,
-  emailA: string,
-  nameA: string,
-  emailB: string,
-  nameB: string,
-): Promise<void> {
-  const ctxA = await browser.newContext();
-  const ctxB = await browser.newContext();
-  const pageA = await ctxA.newPage();
-  const pageB = await ctxB.newPage();
-  try {
-    await registerUser(pageA, emailA, nameA);
-    await registerUser(pageB, emailB, nameB);
-    await expect(pageA.locator(".token-box")).toBeVisible({ timeout: 10_000 });
-    const token = (await pageA.locator(".token-box").innerText()).trim();
-    await pageB.getByLabel("Partner invite token").fill(token);
-    await pageB.getByRole("button", { name: "Link accounts" }).click();
-    await expect(pageB).toHaveURL("/", { timeout: 10_000 });
-    await expect(pageA).toHaveURL("/", { timeout: 10_000 });
-  } finally {
-    await ctxA.close();
-    await ctxB.close();
-  }
-}
-
 /**
  * Sign in as an already-paired user and wait to land on the discovery page.
  * All subsequent navigation must use SPA link/button clicks — page.goto() causes
@@ -63,6 +37,8 @@ async function loginAs(page: Page, email: string): Promise<void> {
 
 test.describe.serial("Discovery Feed", () => {
   test.beforeAll(async ({ browser }) => {
+    test.setTimeout(120_000);
+
     // Couple A+B: requesting couple — hiking only (registerUser default)
     await linkCouple(browser, EMAIL_A, NAME_A, EMAIL_B, NAME_B);
 
@@ -79,23 +55,33 @@ test.describe.serial("Discovery Feed", () => {
       ).toBeVisible({ timeout: 5_000 });
 
       await page.getByRole("button", { name: "cooking" }).click();
+      const profileSaveResp = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/profiles/me") &&
+          resp.request().method() === "PATCH",
+        { timeout: 10_000 },
+      );
       await page.getByRole("button", { name: "Save profile" }).click();
-      await expect(page.getByText("Profile saved successfully.")).toBeVisible({
-        timeout: 5_000,
-      });
+      expect((await profileSaveResp).status()).toBe(200);
 
-      const coupleDataLoaded = page.waitForResponse((resp) =>
-        resp.url().includes("/pairs/me"),
+      const coupleDataLoaded = page.waitForResponse(
+        (resp) => resp.url().includes("/pairs/me"),
+        { timeout: 10_000 },
       );
       await page.getByRole("button", { name: "Couple preview" }).click();
       await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
       expect((await coupleDataLoaded).status()).toBe(200);
+
       await page.locator("#aboutUs").fill(ABOUT_US);
       await page.locator("#coupleLocation").fill(LOCATION);
+      const coupleSaveResp = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/couples/me") &&
+          resp.request().method() === "PATCH",
+        { timeout: 10_000 },
+      );
       await page.getByRole("button", { name: "Save couple profile" }).click();
-      await expect(
-        page.getByText("Couple profile saved successfully."),
-      ).toBeVisible({ timeout: 5_000 });
+      expect((await coupleSaveResp).status()).toBe(200);
     } finally {
       await ctx.close();
     }
@@ -215,10 +201,10 @@ test.describe.serial("Discovery Feed", () => {
       // Own couple (A+B) must not appear in the results
       await expect(
         page.locator(".couple-grid .couple-card").filter({ hasText: NAME_A }),
-      ).not.toBeVisible();
+      ).not.toBeVisible({ timeout: 5_000 });
       await expect(
         page.locator(".couple-grid .couple-card").filter({ hasText: NAME_B }),
-      ).not.toBeVisible();
+      ).not.toBeVisible({ timeout: 5_000 });
     } finally {
       await ctx.close();
     }

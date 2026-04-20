@@ -538,4 +538,144 @@ describe("DiscoveryPage", () => {
     // Partner bio
     expect(screen.getByText("I love the mountains.")).toBeInTheDocument();
   });
+
+  describe("CoupleDetailModal integration", () => {
+    it("opens the modal when a couple card is clicked", async () => {
+      mockSuccess();
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      expect(
+        document.querySelector(".discovery-modal-overlay"),
+      ).not.toBeInTheDocument();
+
+      const card = screen
+        .getAllByRole("button", { name: /i'm interested/i })[0]
+        .closest(".couple-card")!;
+      await userEvent.click(card);
+
+      expect(
+        document.querySelector(".discovery-modal-overlay"),
+      ).toBeInTheDocument();
+    });
+
+    it("closes the modal when the close button is clicked", async () => {
+      mockSuccess();
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      const card = screen
+        .getAllByRole("button", { name: /i'm interested/i })[0]
+        .closest(".couple-card")!;
+      await userEvent.click(card);
+
+      expect(
+        document.querySelector(".discovery-modal-overlay"),
+      ).toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole("button", { name: /×/i }));
+
+      expect(
+        document.querySelector(".discovery-modal-overlay"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("closes the modal when the overlay backdrop is clicked", async () => {
+      mockSuccess();
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      const card = screen
+        .getAllByRole("button", { name: /i'm interested/i })[0]
+        .closest(".couple-card")!;
+      await userEvent.click(card);
+
+      const overlay = document.querySelector(".discovery-modal-overlay")!;
+      expect(overlay).toBeInTheDocument();
+
+      await userEvent.click(overlay);
+
+      expect(
+        document.querySelector(".discovery-modal-overlay"),
+      ).not.toBeInTheDocument();
+    });
+
+    it("renders about_us text in the modal", async () => {
+      mockSuccess();
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      const card = screen
+        .getAllByRole("button", { name: /i'm interested/i })[0]
+        .closest(".couple-card")!;
+      await userEvent.click(card);
+
+      expect(
+        screen.getByText("Active couple who love hiking."),
+      ).toBeInTheDocument();
+    });
+
+    it("modal CTA calls handleInterested when clicked", async () => {
+      mockApiFetch.mockResolvedValue({
+        ok: true,
+        json: async () => FIXTURE,
+      });
+
+      render(
+        <MemoryRouter>
+          <DiscoveryPage isLinked={true} />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      const card = screen
+        .getAllByRole("button", { name: /i'm interested/i })[0]
+        .closest(".couple-card")!;
+      await userEvent.click(card);
+
+      // Click the modal CTA button
+      const modalCta = screen.getAllByRole("button", {
+        name: /i'm interested/i,
+      })[0];
+      await userEvent.click(modalCta);
+
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenCalledWith(
+          "/connections/interest",
+          expect.objectContaining({ method: "POST" }),
+        ),
+      );
+    });
+  });
 });

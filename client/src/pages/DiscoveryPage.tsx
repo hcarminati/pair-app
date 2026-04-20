@@ -1,25 +1,9 @@
 import { useState, useEffect } from "react";
-import { CoupleCard, AvatarPair } from "../components/CoupleCard";
+import { CoupleCard } from "../components/CoupleCard";
+import { CoupleDetailModal } from "../components/CoupleDetailModal";
 import type { Couple } from "../components/CoupleCard";
+import type { CoupleDetailResult } from "../components/CoupleDetailModal";
 import { apiFetch } from "../lib/api";
-
-interface PartnerDetail {
-  display_name: string;
-  about_me: string | null;
-  location: string | null;
-  tags: string[];
-}
-
-interface DiscoveryResult {
-  pair_id: string;
-  about_us: string | null;
-  location: string | null;
-  tags: string[];
-  matching_tags: string[];
-  shared_count: number;
-  partner1: PartnerDetail;
-  partner2: PartnerDetail;
-}
 
 function getInitials(name: string): string {
   const words = name.trim().split(/\s+/);
@@ -29,7 +13,7 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function toCouple(r: DiscoveryResult): Couple {
+function toCouple(r: CoupleDetailResult): Couple {
   return {
     id: r.pair_id,
     names: `${r.partner1.display_name} & ${r.partner2.display_name}`,
@@ -48,7 +32,7 @@ interface Props {
 }
 
 export default function DiscoveryPage({ isLinked }: Props) {
-  const [results, setResults] = useState<DiscoveryResult[]>([]);
+  const [results, setResults] = useState<CoupleDetailResult[]>([]);
   const [couples, setCouples] = useState<Couple[]>([]);
   const [loading, setLoading] = useState(isLinked);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +76,7 @@ export default function DiscoveryPage({ isLinked }: Props) {
           setError(body.error ?? "Failed to load discovery feed");
           return;
         }
-        const data = (await res.json()) as DiscoveryResult[];
+        const data = (await res.json()) as CoupleDetailResult[];
         setResults(data);
         setCouples(data.map(toCouple));
         if (activeFilters.length === 0 && activeLocation === null) {
@@ -208,125 +192,13 @@ export default function DiscoveryPage({ isLinked }: Props) {
           </div>
 
           {selectedResult && selectedCouple && (
-            <div
-              className="discovery-modal-overlay"
-              onClick={() => setSelectedId(null)}
-            >
-              <div
-                className="discovery-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Header */}
-                <div className="discovery-modal-header">
-                  <div className="couple-card-identity">
-                    <AvatarPair
-                      initials1={selectedCouple.initials1}
-                      initials2={selectedCouple.initials2}
-                      size="lg"
-                    />
-                    <div>
-                      <h2>{selectedCouple.names}</h2>
-                      {selectedResult.location && (
-                        <p className="discovery-subtitle">
-                          {selectedResult.location}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    className="discovery-modal-close"
-                    onClick={() => setSelectedId(null)}
-                  >
-                    ×
-                  </button>
-                </div>
-
-                {/* About us */}
-                {selectedResult.about_us && (
-                  <div className="discovery-modal-section">
-                    <h3>About us</h3>
-                    <p className="text-muted">{selectedResult.about_us}</p>
-                  </div>
-                )}
-
-                {/* Shared interests */}
-                {selectedResult.tags.length > 0 && (
-                  <div className="discovery-modal-section">
-                    <h3>Interests</h3>
-                    <div className="discovery-modal-common">
-                      <span>
-                        {selectedResult.shared_count} interest
-                        {selectedResult.shared_count === 1 ? "" : "s"} in common
-                      </span>
-                    </div>
-                    <div className="interest-pills">
-                      {selectedResult.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className={`pill pill--sm${selectedResult.matching_tags.includes(tag) ? " pill--active" : ""}`}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Per-partner cards — mirrors CoupleProfilePage */}
-                <div className="discovery-modal-section">
-                  <h3>Partners</h3>
-                  <div className="couple-grid">
-                    {[selectedResult.partner1, selectedResult.partner2].map(
-                      (partner) => (
-                        <div
-                          key={partner.display_name}
-                          className="couple-card couple-card--static"
-                        >
-                          <div className="couple-card-header">
-                            <div className="couple-card-identity">
-                              <div className="avatar avatar--md">
-                                {getInitials(partner.display_name)}
-                              </div>
-                              <span className="couple-names">
-                                {partner.display_name}
-                              </span>
-                            </div>
-                          </div>
-                          <p className="discovery-subtitle">
-                            {partner.location ?? "No location set"}
-                          </p>
-                          <p className="text-muted">
-                            {partner.about_me ?? "No bio yet"}
-                          </p>
-                          {partner.tags.length > 0 && (
-                            <div
-                              className="interest-pills"
-                              style={{ marginTop: 12 }}
-                            >
-                              {partner.tags.map((tag) => (
-                                <span key={tag} className="pill pill--sm">
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ),
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  className="btn btn--primary btn--full"
-                  disabled={interestedPairIds.has(selectedResult.pair_id)}
-                  onClick={() => handleInterested(selectedResult.pair_id)}
-                >
-                  {interestedPairIds.has(selectedResult.pair_id)
-                    ? "Interested"
-                    : "I'm interested"}
-                </button>
-              </div>
-            </div>
+            <CoupleDetailModal
+              result={selectedResult}
+              couple={selectedCouple}
+              isInterested={interestedPairIds.has(selectedResult.pair_id)}
+              onClose={() => setSelectedId(null)}
+              onInterested={() => handleInterested(selectedResult.pair_id)}
+            />
           )}
         </>
       )}

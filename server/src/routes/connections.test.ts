@@ -1200,6 +1200,7 @@ type ConnectedMockOptions = {
   profiles?: Record<string, unknown>[];
   tagRows?: Record<string, unknown>[];
   pairs?: Record<string, unknown>[];
+  messages?: Record<string, unknown>[];
 };
 
 function setupConnectedMocks({
@@ -1207,6 +1208,7 @@ function setupConnectedMocks({
   profiles = [],
   tagRows = [],
   pairs = [],
+  messages = [],
 }: ConnectedMockOptions = {}) {
   mockFrom.mockImplementation((table: string) => {
     if (table === "connection_requests") {
@@ -1234,6 +1236,15 @@ function setupConnectedMocks({
       return {
         select: vi.fn().mockReturnValue({
           or: vi.fn().mockResolvedValue({ data: pairs, error: null }),
+        }),
+      };
+    }
+    if (table === "messages") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockReturnValue({
+            order: vi.fn().mockResolvedValue({ data: messages, error: null }),
+          }),
         }),
       };
     }
@@ -1341,6 +1352,78 @@ describe("GET /connections/connected", () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual([]);
+  });
+
+  it("includes the latest message content as latest_message", async () => {
+    mockAuthenticatedUser();
+    setupConnectedMocks({
+      allRequests: [CONNECTED_REQUEST],
+      profiles: [
+        {
+          id: TARGET_USER_A,
+          display_name: "Carol",
+          about_me: null,
+          location: null,
+        },
+        {
+          id: TARGET_USER_B,
+          display_name: "Dave",
+          about_me: null,
+          location: null,
+        },
+      ],
+      messages: [
+        {
+          request_id: REQUEST_ID,
+          content: "See you there!",
+          created_at: "2026-01-02T00:00:00Z",
+        },
+        {
+          request_id: REQUEST_ID,
+          content: "Older message",
+          created_at: "2026-01-01T00:00:00Z",
+        },
+      ],
+    });
+
+    const res = await request(app)
+      .get("/connections/connected")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].latest_message).toEqual({
+      content: "See you there!",
+      created_at: "2026-01-02T00:00:00Z",
+    });
+  });
+
+  it("returns null for latest_message when there are no messages", async () => {
+    mockAuthenticatedUser();
+    setupConnectedMocks({
+      allRequests: [CONNECTED_REQUEST],
+      profiles: [
+        {
+          id: TARGET_USER_A,
+          display_name: "Carol",
+          about_me: null,
+          location: null,
+        },
+        {
+          id: TARGET_USER_B,
+          display_name: "Dave",
+          about_me: null,
+          location: null,
+        },
+      ],
+      messages: [],
+    });
+
+    const res = await request(app)
+      .get("/connections/connected")
+      .set("Authorization", "Bearer valid-jwt");
+
+    expect(res.status).toBe(200);
+    expect(res.body[0].latest_message).toBeNull();
   });
 
   it("returns 401 when not authenticated", async () => {

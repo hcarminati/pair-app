@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(npm run:*)",
-      "Bash(find /Users/heathercarminati1/Documents/GitHub/pair-app/server/src/middleware -type f -name *.ts)"
+      "Bash(find /Users/heathercarminati1/Documents/GitHub/pair-app/server/src/middleware -type f -name *.ts)",
+      "mcp__plugin_figma_figma__get_design_context",
+      "mcp__github__get_issue"
     ]
   }
 }

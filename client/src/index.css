@@ -1184,3 +1184,86 @@ code {
   color: #666;
   font-size: 15px;
 }
+
+/* ── Connections list ─────────────────────────────────────── */
+
+.connections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.connection-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  background: #fff;
+}
+
+.connection-row:hover {
+  border-color: #bbb;
+}
+
+.connection-row-avatars {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.connection-row-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  text-align: left;
+}
+
+.connection-row-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-row-preview {
+  font-size: 15px;
+  color: #aaa;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.connection-row-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.connection-row-time {
+  font-size: 14px;
+  color: #aaa;
+  white-space: nowrap;
+}
+
+.connection-row-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}

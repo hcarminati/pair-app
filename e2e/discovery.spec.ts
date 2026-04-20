@@ -84,8 +84,8 @@ test.describe.serial("Discovery Feed", () => {
         timeout: 5_000,
       });
 
-      const coupleDataLoaded = page.waitForResponse(
-        (resp) => resp.url().includes("/pairs/me"),
+      const coupleDataLoaded = page.waitForResponse((resp) =>
+        resp.url().includes("/pairs/me"),
       );
       await page.getByRole("button", { name: "Couple preview" }).click();
       await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });

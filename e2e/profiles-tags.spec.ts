@@ -80,8 +80,8 @@ test.describe.serial("Profiles and Tags", () => {
     // Switch to another tab and back — unmount/remount triggers a fresh DB fetch
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
-    const profileLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/profiles/me"),
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/profiles/me"),
     );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
@@ -119,8 +119,8 @@ test.describe.serial("Profiles and Tags", () => {
     // Switch tabs to trigger a fresh DB fetch on remount
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
-    const profileLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/profiles/me"),
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/profiles/me"),
     );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
@@ -138,8 +138,8 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
-    const coupleDataLoaded1 = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded1 = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
@@ -158,8 +158,8 @@ test.describe.serial("Profiles and Tags", () => {
     await expect(
       page.getByRole("button", { name: "Save profile" }),
     ).toBeVisible({ timeout: 5_000 });
-    const coupleDataLoaded2 = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded2 = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
@@ -186,8 +186,8 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
-    const coupleDataLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });

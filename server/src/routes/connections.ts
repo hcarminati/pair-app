@@ -672,23 +672,52 @@ connectionsRouter.get(
       ),
     ];
 
-    const [{ data: profiles }, { data: tagRows }, { data: pairs }] =
-      await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, display_name, about_me, location")
-          .in("id", otherUserIds),
-        supabase
-          .from("user_tags")
-          .select("user_id, tags(label)")
-          .in("user_id", otherUserIds),
-        supabase
-          .from("pairs")
-          .select("id, profile_id_1, profile_id_2, about_us, location")
-          .or(
-            `profile_id_1.in.(${otherUserIds.join(",")}),profile_id_2.in.(${otherUserIds.join(",")})`,
-          ),
-      ]);
+    const requestIds = requests.map((r) => r.id as string);
+
+    const [
+      { data: profiles },
+      { data: tagRows },
+      { data: pairs },
+      { data: messages },
+    ] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, display_name, about_me, location")
+        .in("id", otherUserIds),
+      supabase
+        .from("user_tags")
+        .select("user_id, tags(label)")
+        .in("user_id", otherUserIds),
+      supabase
+        .from("pairs")
+        .select("id, profile_id_1, profile_id_2, about_us, location")
+        .or(
+          `profile_id_1.in.(${otherUserIds.join(",")}),profile_id_2.in.(${otherUserIds.join(",")})`,
+        ),
+      supabase
+        .from("messages")
+        .select("request_id, content, created_at")
+        .in("request_id", requestIds)
+        .order("created_at", { ascending: false }),
+    ]);
+
+    type MessageRow = {
+      request_id: string;
+      content: string;
+      created_at: string;
+    };
+    const latestMessageByRequest = new Map<
+      string,
+      { content: string; created_at: string }
+    >();
+    for (const msg of (messages ?? []) as MessageRow[]) {
+      if (!latestMessageByRequest.has(msg.request_id)) {
+        latestMessageByRequest.set(msg.request_id, {
+          content: msg.content,
+          created_at: msg.created_at,
+        });
+      }
+    }
 
     type ProfileRow = {
       id: string;
@@ -768,6 +797,7 @@ connectionsRouter.get(
             }
           : null,
         created_at: r.created_at as string,
+        latest_message: latestMessageByRequest.get(r.id as string) ?? null,
       };
     });
 

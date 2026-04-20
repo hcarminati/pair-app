@@ -203,8 +203,13 @@ test.describe.serial("Connection Alignment Flow", () => {
         pageB.getByRole("button", { name: "Interested" }),
       ).toBeVisible({ timeout: 10_000 });
 
-      // User C: navigate to Inbound Requests — the request should now appear
+      // User C: land on discover first (lets the app fully initialize and
+      // triggers the INTEREST_ALIGNED → REQUEST_PENDING auto-transition on
+      // the inbound fetch), then navigate to Inbound Requests via sidebar.
       await loginAs(pageC, EMAIL_C);
+      await expect(pageC.getByRole("heading", { name: "Discover couples" })).toBeVisible({
+        timeout: 10_000,
+      });
       await pageC.getByRole("link", { name: "Inbound Requests" }).click();
       await expect(pageC).toHaveURL("/inbound-requests", { timeout: 10_000 });
 

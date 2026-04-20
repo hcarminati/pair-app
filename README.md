@@ -6,6 +6,39 @@
 
 **Live app:** https://pair-app.netlify.app
 
+Pair is a couples-only friend-matching web app. The unit of identity is a **couple**  -  two linked user accounts. All connection logic enforces dual-consent at every stage.
+
+## Architecture
+
+```mermaid
+graph TD
+    subgraph Client ["Client (React + TypeScript, Netlify)"]
+        UI[React SPA]
+        RT[Supabase Realtime - chat subscription]
+    end
+
+    subgraph Server ["Server (Express + Node.js, Render)"]
+        MW[Auth Middleware - JWT verification]
+        Routes[REST Route Handlers]
+        SVC[Service Layer - connection state machine - dual-consent logic]
+    end
+
+    subgraph Supabase
+        Auth[Supabase Auth - JWT issuer]
+        DB[(Postgres - profiles, pairs, tags, connection_requests, messages)]
+        Realtime[Supabase Realtime - messages channel]
+    end
+
+    UI -- "API calls (JWT in header)" --> MW
+    MW --> Routes
+    Routes --> SVC
+    SVC -- "service role key (bypasses RLS)" --> DB
+    Auth -- "issues JWT" --> UI
+    UI -- "anon key - direct subscription" --> Realtime
+    Realtime -- "broadcast" --> RT
+    DB -- "change events" --> Realtime
+```
+
 This project is a monorepo containing a `client` and a `server` application. It uses npm workspaces to manage dependencies across both projects.
 
 ## Prerequisites
@@ -26,20 +59,20 @@ This project is a monorepo containing a `client` and a `server` application. It 
 2. Go to the **SQL Editor** and run `project-memory/database-setup.sql` to create the schema, seed preset tags, and register the E2E test cleanup function.
 3. Set up environment variables:
 
-   **Server** (`server/.env`) — backend only, never expose these to the client:
+   **Server** (`server/.env`)  -  backend only, never expose these to the client:
    ```bash
    cp server/.env.example server/.env
    ```
-   - `SUPABASE_URL` — found on the **Project Overview** homepage
-   - `SUPABASE_SECRET_KEY` — found under **Project Settings → API Keys** (secret key)
-   - `SUPABASE_ANON_KEY` — found under **Project Settings → API Keys** (publishable key)
+   - `SUPABASE_URL`  -  found on the **Project Overview** homepage
+   - `SUPABASE_SECRET_KEY`  -  found under **Project Settings → API Keys** (secret key)
+   - `SUPABASE_ANON_KEY`  -  found under **Project Settings → API Keys** (publishable key)
 
-   **Client** (`client/.env`) — used for Supabase Realtime and E2E test auth:
+   **Client** (`client/.env`)  -  used for Supabase Realtime and E2E test auth:
    ```bash
    cp client/.env.example client/.env
    ```
-   - `VITE_SUPABASE_URL` — same Supabase project URL as above
-   - `VITE_SUPABASE_ANON_KEY` — same Supabase project publishable key as above
+   - `VITE_SUPABASE_URL`  -  same Supabase project URL as above
+   - `VITE_SUPABASE_ANON_KEY`  -  same Supabase project publishable key as above
 
 ## Database
 
@@ -47,13 +80,13 @@ The schema, seed data, and E2E test helper function are all in `project-memory/d
 
 To set up the database, paste the contents of that file into the **Supabase Studio SQL Editor** and run it. This creates all tables, seeds preset tags, and registers two functions:
 
-- `link_partners(user_a, user_b)` — atomically links two profiles and creates the `pairs` row in a single transaction; called by the Express backend via `supabase.rpc()`
-- `unlink_partners(user_a, partner)` — atomically unlinks two profiles, deletes the `pairs` row, and removes all shared connection requests (cascades to participants and messages); called by the Express backend via `supabase.rpc()`
-- `delete_test_user()` — E2E test cleanup (see below)
+- `link_partners(user_a, user_b)`  -  atomically links two profiles and creates the `pairs` row in a single transaction; called by the Express backend via `supabase.rpc()`
+- `unlink_partners(user_a, partner)`  -  atomically unlinks two profiles, deletes the `pairs` row, and removes all shared connection requests (cascades to participants and messages); called by the Express backend via `supabase.rpc()`
+- `delete_test_user()`  -  E2E test cleanup (see below)
 
 ### E2E Test Cleanup
 
-E2E test users are created with emails matching `test_e2e_%@example.com`. After a test run, each test user calls `delete_test_user()` to self-delete using their own JWT — no service role key required:
+E2E test users are created with emails matching `test_e2e_%@example.com`. After a test run, each test user calls `delete_test_user()` to self-delete using their own JWT  -  no service role key required:
 
 ```sql
 SELECT delete_test_user();
@@ -116,14 +149,14 @@ E2E tests require both the client and server to be running. The test runner star
 
 Before running E2E tests, ensure `client/.env` has the following set:
 
-- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — required for all E2E tests
-- `TEST_USER_EMAIL` and `TEST_USER_PASSWORD` — a pre-seeded Supabase user for the "valid login" test; if omitted that test is skipped
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`  -  required for all E2E tests
+- `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`  -  a pre-seeded Supabase user for the "valid login" test; if omitted that test is skipped
 
-- **Run E2E tests (headed — browser visible):**
+- **Run E2E tests (headed  -  browser visible):**
   ```bash
   npm run test:e2e
   ```
-- **Run E2E tests (headless — mirrors CI):**
+- **Run E2E tests (headless  -  mirrors CI):**
   ```bash
   npm run test:e2e:headless
   ```
@@ -143,5 +176,5 @@ The E2E workflow (`.github/workflows/e2e.yml`) requires the following secrets se
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase publishable (anon) key |
 | `SUPABASE_SECRET_KEY` | Supabase service role key (server only) |
-| `TEST_USER_EMAIL` | Pre-seeded test user email (optional — skips valid-login test if absent) |
-| `TEST_USER_PASSWORD` | Pre-seeded test user password (optional — skips valid-login test if absent) |
+| `TEST_USER_EMAIL` | Pre-seeded test user email (optional  -  skips valid-login test if absent) |
+| `TEST_USER_PASSWORD` | Pre-seeded test user password (optional  -  skips valid-login test if absent) |

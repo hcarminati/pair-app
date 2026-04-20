@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find /Users/heathercarminati1/Documents/GitHub/pair-app/server/src/middleware -type f -name *.ts)"
     ]
   }
 }

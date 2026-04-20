@@ -1079,6 +1079,16 @@ code {
   width: 100%;
 }
 
+.inbound-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.inbound-actions .btn {
+  flex: 1;
+}
+
 /* Unlinked state */
 
 .discovery-unlinked {

@@ -239,6 +239,10 @@ describe("DiscoveryPage", () => {
     it("active filter pills have the pill--active class", async () => {
       mockApiFetch.mockResolvedValueOnce({
         ok: true,
+        json: async () => [],
+      });
+      mockApiFetch.mockResolvedValueOnce({
+        ok: true,
         json: async () => FIXTURE,
       });
       mockApiFetch.mockResolvedValueOnce({

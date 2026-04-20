@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { authRouter } from "./routes/auth.js";
+import { connectionsRouter } from "./routes/connections.js";
 import { couplesRouter } from "./routes/couples.js";
 import { discoveryRouter } from "./routes/discovery.js";
 import { pairsRouter } from "./routes/pairs.js";
@@ -49,6 +50,7 @@ app.get("/health", (_, res) => {
 });
 
 app.use("/auth", authRouter);
+app.use("/connections", connectionsRouter);
 app.use("/couples", couplesRouter);
 app.use("/discovery", discoveryRouter);
 app.use("/pairs", pairsRouter);

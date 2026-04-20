@@ -31,11 +31,21 @@ export function AvatarPair({
 
 interface Props {
   couple: Couple;
+  isInterested?: boolean;
+  ctaLabel?: string;
+  showCta?: boolean;
   onClick: () => void;
   onInterested: () => void;
 }
 
-export function CoupleCard({ couple, onClick, onInterested }: Props) {
+export function CoupleCard({
+  couple,
+  isInterested = false,
+  ctaLabel = "I'm interested",
+  showCta = true,
+  onClick,
+  onInterested,
+}: Props) {
   return (
     <div className="couple-card" onClick={onClick}>
       <div className="couple-card-header">
@@ -60,15 +70,18 @@ export function CoupleCard({ couple, onClick, onInterested }: Props) {
           </span>
         ))}
       </div>
-      <button
-        className="btn btn--secondary btn--full"
-        onClick={(e) => {
-          e.stopPropagation();
-          onInterested();
-        }}
-      >
-        {"I'm interested"}
-      </button>
+      {showCta && (
+        <button
+          className={`btn btn--full${isInterested ? " btn--primary" : " btn--secondary"}`}
+          disabled={isInterested}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!isInterested) onInterested();
+          }}
+        >
+          {isInterested ? "Interested" : ctaLabel}
+        </button>
+      )}
     </div>
   );
 }

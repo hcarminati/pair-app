@@ -61,13 +61,14 @@ discoveryRouter.get("/", verifyToken, async (req: Request, res: Response) => {
       .filter((l): l is string => typeof l === "string"),
   );
 
-  // 4. Find all CONNECTED connection requests involving our couple to exclude
+  // 4. Find all connection requests involving our couple (any status) to exclude
+  //    from discovery — a couple already in any stage of the flow should not
+  //    appear in Discover.
   const { data: connectedRequests } = await supabase
     .from("connection_requests")
     .select(
       "couple_1_user_a, couple_1_user_b, couple_2_user_a, couple_2_user_b",
     )
-    .eq("status", "CONNECTED")
     .or(
       `couple_1_user_a.eq.${user.id},couple_1_user_b.eq.${user.id},couple_2_user_a.eq.${user.id},couple_2_user_b.eq.${user.id}`,
     );

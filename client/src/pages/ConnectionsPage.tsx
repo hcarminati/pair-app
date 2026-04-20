@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 
 interface PartnerDetail {
@@ -84,7 +85,7 @@ export default function ConnectionsPage() {
             const unread = result.unread_count ?? 0;
 
             return (
-              <div key={result.request_id} className="connection-row">
+              <Link key={result.request_id} to={`/chat/${result.request_id}`} state={{ connection: result }} className="connection-row">
                 <div className="connection-row-avatars">
                   <div className="avatar avatar--lg">{initials1}</div>
                   <div className="avatar avatar--lg avatar--overlap">
@@ -105,7 +106,7 @@ export default function ConnectionsPage() {
                     <span className="connection-row-badge">{unread}</span>
                   )}
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

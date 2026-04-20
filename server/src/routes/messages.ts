@@ -67,7 +67,27 @@ messagesRouter.get(
       return;
     }
 
-    res.status(200).json(messages ?? []);
+    const rows = messages ?? [];
+
+    // Enrich with sender display names
+    const senderIds = [...new Set(rows.map((m) => m.sender_id as string))];
+    const displayNameMap = new Map<string, string>();
+    if (senderIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name")
+        .in("id", senderIds);
+      for (const p of profiles ?? []) {
+        displayNameMap.set(p.id as string, p.display_name as string);
+      }
+    }
+
+    const enriched = rows.map((m) => ({
+      ...m,
+      sender_display_name: displayNameMap.get(m.sender_id as string) ?? null,
+    }));
+
+    res.status(200).json(enriched);
   },
 );
 
@@ -126,6 +146,15 @@ messagesRouter.post(
       return;
     }
 
-    res.status(201).json(message);
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+
+    res.status(201).json({
+      ...message,
+      sender_display_name: profile?.display_name ?? null,
+    });
   },
 );

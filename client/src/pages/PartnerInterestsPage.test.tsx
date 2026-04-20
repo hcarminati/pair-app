@@ -156,15 +156,22 @@ describe("PartnerInterestsPage", () => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
 
-    expect(screen.getByRole("button", { name: /^approve$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^decline$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^approve$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^decline$/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows 'Interested' after approving", async () => {
     mockSuccess();
     mockApiFetch.mockImplementation((url: string) => {
       if (url === "/connections/partner-interests") {
-        return Promise.resolve({ ok: true, json: async () => INTERESTS_FIXTURE });
+        return Promise.resolve({
+          ok: true,
+          json: async () => INTERESTS_FIXTURE,
+        });
       }
       if (url === "/pairs/me") {
         return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
@@ -182,7 +189,9 @@ describe("PartnerInterestsPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^approve$/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /^approve$/i }),
+      ).toBeInTheDocument(),
     );
 
     await userEvent.click(screen.getByRole("button", { name: /^approve$/i }));
@@ -198,7 +207,10 @@ describe("PartnerInterestsPage", () => {
     mockSuccess();
     mockApiFetch.mockImplementation((url: string) => {
       if (url === "/connections/partner-interests") {
-        return Promise.resolve({ ok: true, json: async () => INTERESTS_FIXTURE });
+        return Promise.resolve({
+          ok: true,
+          json: async () => INTERESTS_FIXTURE,
+        });
       }
       if (url === "/pairs/me") {
         return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
@@ -216,7 +228,9 @@ describe("PartnerInterestsPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^decline$/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /^decline$/i }),
+      ).toBeInTheDocument(),
     );
 
     await userEvent.click(screen.getByRole("button", { name: /^decline$/i }));

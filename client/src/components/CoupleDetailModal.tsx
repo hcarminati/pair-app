@@ -46,14 +46,8 @@ export function CoupleDetailModal({
   hideCta = false,
 }: Props) {
   return (
-    <div
-      className="discovery-modal-overlay"
-      onClick={onClose}
-    >
-      <div
-        className="discovery-modal"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="discovery-modal-overlay" onClick={onClose}>
+      <div className="discovery-modal" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="discovery-modal-header">
           <div className="couple-card-identity">
@@ -69,10 +63,7 @@ export function CoupleDetailModal({
               )}
             </div>
           </div>
-          <button
-            className="discovery-modal-close"
-            onClick={onClose}
-          >
+          <button className="discovery-modal-close" onClick={onClose}>
             ×
           </button>
         </div>

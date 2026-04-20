@@ -157,8 +157,12 @@ describe("InboundRequestsPage", () => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
 
-    expect(screen.getByRole("button", { name: /^accept$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^decline$/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^accept$/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^decline$/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows 'Waiting for partner' after accepting", async () => {
@@ -186,7 +190,9 @@ describe("InboundRequestsPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^accept$/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /^accept$/i }),
+      ).toBeInTheDocument(),
     );
 
     await userEvent.click(screen.getByRole("button", { name: /^accept$/i }));
@@ -223,7 +229,9 @@ describe("InboundRequestsPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /^decline$/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /^decline$/i }),
+      ).toBeInTheDocument(),
     );
 
     await userEvent.click(screen.getByRole("button", { name: /^decline$/i }));
@@ -309,9 +317,7 @@ describe("InboundRequestsPage", () => {
       const card = document.querySelector(".couple-card")!;
       await userEvent.click(card);
 
-      expect(
-        screen.getByText("We love hiking together."),
-      ).toBeInTheDocument();
+      expect(screen.getByText("We love hiking together.")).toBeInTheDocument();
       expect(
         screen.getByRole("heading", { name: /partners/i }),
       ).toBeInTheDocument();

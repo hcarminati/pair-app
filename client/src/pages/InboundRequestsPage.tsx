@@ -49,7 +49,10 @@ function toCouple(r: InboundResult, ownTags: string[]): Couple {
   };
 }
 
-function toDetailResult(r: InboundResult, ownTags: string[]): CoupleDetailResult {
+function toDetailResult(
+  r: InboundResult,
+  ownTags: string[],
+): CoupleDetailResult {
   const p1Name = r.partner1?.display_name ?? "?";
   const p2Name = r.partner2?.display_name ?? "?";
   const matching = r.tags.filter((t) => ownTags.includes(t));

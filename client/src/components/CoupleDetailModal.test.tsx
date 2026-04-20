@@ -47,7 +47,9 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByRole("heading", { name: /morgan & casey/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /morgan & casey/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders the couple location in the modal header", () => {
@@ -74,8 +76,12 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByRole("heading", { name: /about us/i })).toBeInTheDocument();
-    expect(screen.getByText("Active couple who love hiking.")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /about us/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Active couple who love hiking."),
+    ).toBeInTheDocument();
   });
 
   it("does not render about us section when absent", () => {
@@ -89,7 +95,9 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.queryByRole("heading", { name: /about us/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: /about us/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("renders the interests section with shared count", () => {
@@ -148,11 +156,15 @@ describe("CoupleDetailModal", () => {
     // In the shared interests section, matching tags have pill--active.
     // hiking is a matching tag — at least one pill with that text should have pill--active.
     const hikingPills = screen.getAllByText("hiking");
-    expect(hikingPills.some((el) => el.classList.contains("pill--active"))).toBe(true);
+    expect(
+      hikingPills.some((el) => el.classList.contains("pill--active")),
+    ).toBe(true);
     // films is NOT a matching tag — no pill with that text in the interests section should have pill--active.
     // (Partner card pills don't get pill--active either.)
     const filmsPills = screen.getAllByText("films");
-    expect(filmsPills.every((el) => !el.classList.contains("pill--active"))).toBe(true);
+    expect(
+      filmsPills.every((el) => !el.classList.contains("pill--active")),
+    ).toBe(true);
   });
 
   it("renders per-partner section with Partners heading", () => {
@@ -165,7 +177,9 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByRole("heading", { name: /partners/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /partners/i }),
+    ).toBeInTheDocument();
   });
 
   it("renders each partner's name, bio, and location", () => {
@@ -228,8 +242,12 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByRole("button", { name: /i'm interested/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /i'm interested/i })).not.toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /i'm interested/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /i'm interested/i }),
+    ).not.toBeDisabled();
   });
 
   it("renders the CTA button disabled with 'Interested' when already interested", () => {
@@ -242,7 +260,9 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByRole("button", { name: /^interested$/i })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /^interested$/i }),
+    ).toBeDisabled();
   });
 
   it("calls onInterested when CTA button is clicked", async () => {
@@ -256,7 +276,9 @@ describe("CoupleDetailModal", () => {
         onInterested={onInterested}
       />,
     );
-    await userEvent.click(screen.getByRole("button", { name: /i'm interested/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /i'm interested/i }),
+    );
     expect(onInterested).toHaveBeenCalledOnce();
   });
 
@@ -321,6 +343,8 @@ describe("CoupleDetailModal", () => {
         hideCta
       />,
     );
-    expect(screen.queryByRole("button", { name: /interested/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /interested/i }),
+    ).not.toBeInTheDocument();
   });
 });

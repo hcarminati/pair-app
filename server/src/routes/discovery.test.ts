@@ -165,7 +165,7 @@ function setupMocks({
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
 });
 
 describe("GET /discovery", () => {

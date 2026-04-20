@@ -26,6 +26,12 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # - name: Format check
+      #   run: npm run format:check
+
+      - name: Type check
+        run: npx tsc --noEmit -p client/tsconfig.app.json && npx tsc --noEmit -p server/tsconfig.json
+
       - name: Test client
         run: npm run test:client
 
@@ -34,3 +40,6 @@ jobs:
 
       - name: Build client
         run: npm run build --workspace=client
+
+      - name: Security scan
+        run: npm audit --audit-level=high

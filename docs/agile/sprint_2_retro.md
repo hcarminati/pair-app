@@ -8,7 +8,7 @@
 - Splitting the couple profile into two issues (edit fields + preview page) kept PRs focused and review fast.
 
 ## What could be improved?
-- A route guard gap — unauthenticated access to the couple profile route — was found during E2E testing rather than during planning. A route-guard checklist at planning time would have caught it earlier.
+- A route guard gap  -  unauthenticated access to the couple profile route  -  was found during E2E testing rather than during planning. A route-guard checklist at planning time would have caught it earlier.
 - Feature issue ownership was imbalanced this sprint; Heather carried most of the feature work while Edward focused on E2E. Both partners should own feature issues every sprint.
 
 ## Action Items for Next Sprint

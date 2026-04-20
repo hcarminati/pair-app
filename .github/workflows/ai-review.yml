@@ -1,0 +1,35 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [develop]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR diff
+        run: git diff origin/${{ github.base_ref }}...HEAD > pr.diff
+
+      # Disabled until ANTHROPIC_API_KEY is available
+      # - name: Install Claude Code
+      #   run: npm install -g @anthropic-ai/claude-code
+      #
+      # - name: Claude Code Review
+      #   run: |
+      #     REVIEW=$(claude -p "Review the following PR diff and categorize findings as:
+      #     - MUST FIX: bugs, security issues
+      #     - SHOULD CONSIDER: performance, readability
+      #     - MINOR: style, naming suggestions
+      #     Be specific. Reference file:line.
+      #
+      #     $(cat pr.diff)")
+      #     gh pr comment ${{ github.event.pull_request.number }} --body "$REVIEW"
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

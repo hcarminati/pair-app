@@ -1,0 +1,41 @@
+name: Security
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Gitleaks # Gate 1: Secrets detection
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dependency scan # Gate 2: Dependencies
+        run: npm audit --audit-level=high
+
+      - name: Semgrep # Gate 3: SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: auto
+
+      # Gate 4: AI security review — disabled until ANTHROPIC_API_KEY is available
+      # - name: Install Claude Code
+      #   run: npm install -g @anthropic-ai/claude-code
+      # - name: Claude Security Review
+      #   run: claude -p "Review this PR for OWASP Top 10. Focus on auth, injection, and data exposure."
+      #   env:
+      #     ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

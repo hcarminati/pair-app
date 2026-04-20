@@ -43,7 +43,7 @@ authRouter.post("/register", async (req: Request, res: Response) => {
         .json({ error: "An account with that email already exists." });
       return;
     }
-    res.status(400).json({ error: createError.message });
+    res.status(400).json({ error: "Registration failed. Please try again." });
     return;
   }
 

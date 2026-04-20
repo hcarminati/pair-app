@@ -1,6 +1,7 @@
-import { test, expect, type Browser, type Page } from "@playwright/test";
-import { registerUser, PASSWORD } from "./helpers/register";
+import { test, expect, type Page } from "@playwright/test";
 import { deleteTestUser } from "./helpers/cleanup";
+import { linkCouple } from "./helpers/couple";
+import { registerUser, PASSWORD } from "./helpers/register";
 
 const TS = Date.now();
 const EMAIL_A = `test_e2e_disc_a_${TS}@example.com`;
@@ -20,33 +21,6 @@ const NAME_F = "Target User F";
 
 const ABOUT_US = "We love adventures";
 const LOCATION = "Portland, OR";
-
-/** Register two users and link them as a couple. Both land on / when done. */
-async function linkCouple(
-  browser: Browser,
-  emailA: string,
-  nameA: string,
-  emailB: string,
-  nameB: string,
-): Promise<void> {
-  const ctxA = await browser.newContext();
-  const ctxB = await browser.newContext();
-  const pageA = await ctxA.newPage();
-  const pageB = await ctxB.newPage();
-  try {
-    await registerUser(pageA, emailA, nameA);
-    await registerUser(pageB, emailB, nameB);
-    await expect(pageA.locator(".token-box")).toBeVisible({ timeout: 10_000 });
-    const token = (await pageA.locator(".token-box").innerText()).trim();
-    await pageB.getByLabel("Partner invite token").fill(token);
-    await pageB.getByRole("button", { name: "Link accounts" }).click();
-    await expect(pageB).toHaveURL("/", { timeout: 10_000 });
-    await expect(pageA).toHaveURL("/", { timeout: 10_000 });
-  } finally {
-    await ctxA.close();
-    await ctxB.close();
-  }
-}
 
 /**
  * Sign in as an already-paired user and wait to land on the discovery page.

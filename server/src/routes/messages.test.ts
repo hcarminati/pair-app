@@ -106,6 +106,20 @@ function setupGetMessagesMocks({
         }),
       };
     }
+
+    if (table === "profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          in: vi.fn().mockResolvedValue({
+            data: [
+              { id: USER_ID, display_name: "Jamie" },
+              { id: OTHER_USER_A, display_name: "Morgan" },
+            ],
+            error: null,
+          }),
+        }),
+      };
+    }
   });
 }
 
@@ -230,12 +244,10 @@ describe("GET /messages/:request_id", () => {
         return {
           select: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
-              order: vi
-                .fn()
-                .mockResolvedValue({
-                  data: null,
-                  error: { message: "DB internal error with sensitive info" },
-                }),
+              order: vi.fn().mockResolvedValue({
+                data: null,
+                error: { message: "DB internal error with sensitive info" },
+              }),
             }),
           }),
         };
@@ -291,6 +303,19 @@ function setupPostMessageMocks({
             single: vi.fn().mockResolvedValue({
               data: insertedMessage,
               error: insertError,
+            }),
+          }),
+        }),
+      };
+    }
+
+    if (table === "profiles") {
+      return {
+        select: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({
+              data: { display_name: "Test User" },
+              error: null,
             }),
           }),
         }),

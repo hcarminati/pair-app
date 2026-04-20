@@ -85,7 +85,12 @@ export default function ConnectionsPage() {
             const unread = result.unread_count ?? 0;
 
             return (
-              <Link key={result.request_id} to={`/chat/${result.request_id}`} state={{ connection: result }} className="connection-row">
+              <Link
+                key={result.request_id}
+                to={`/chat/${result.request_id}`}
+                state={{ connection: result }}
+                className="connection-row"
+              >
                 <div className="connection-row-avatars">
                   <div className="avatar avatar--lg">{initials1}</div>
                   <div className="avatar avatar--lg avatar--overlap">

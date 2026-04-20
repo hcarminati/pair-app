@@ -122,7 +122,10 @@ export default function ChatThreadPage() {
   }, [request_id]);
 
   useEffect(() => {
-    if (bottomRef.current && typeof bottomRef.current.scrollIntoView === "function") {
+    if (
+      bottomRef.current &&
+      typeof bottomRef.current.scrollIntoView === "function"
+    ) {
       bottomRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -239,12 +242,16 @@ export default function ChatThreadPage() {
                     </div>
                   )}
                   <span className="chat-message-label">
-                    <span>{isMe ? "You" : (msg.sender_display_name ?? "Them")}</span>
+                    <span>
+                      {isMe ? "You" : (msg.sender_display_name ?? "Them")}
+                    </span>
                     {" · "}
                     {formatTime(msg.created_at)}
                   </span>
                 </div>
-                <div className={`chat-bubble ${isMe ? "chat-bubble--mine" : "chat-bubble--theirs"}`}>
+                <div
+                  className={`chat-bubble ${isMe ? "chat-bubble--mine" : "chat-bubble--theirs"}`}
+                >
                   {msg.content}
                 </div>
               </div>

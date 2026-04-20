@@ -103,7 +103,9 @@ messagesRouter.post(
     const { content } = req.body as { content?: string };
 
     if (!content || content.trim() === "") {
-      res.status(400).json({ error: "content is required and cannot be empty" });
+      res
+        .status(400)
+        .json({ error: "content is required and cannot be empty" });
       return;
     }
 

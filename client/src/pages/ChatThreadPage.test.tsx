@@ -10,26 +10,22 @@ vi.mock("../lib/api", () => ({
 
 // Supabase client used for Realtime subscriptions.
 // The implementation will create client/src/lib/supabase.ts exporting `supabase`.
-let realtimeCallback: ((payload: { new: Record<string, unknown> }) => void) | null = null;
+let realtimeCallback:
+  | ((payload: { payload: Record<string, unknown> }) => void)
+  | null = null;
 
-const mockChannel = {
-  on: vi.fn().mockImplementation(
-    (
-      _event: string,
-      _filter: unknown,
-      cb: (payload: { new: Record<string, unknown> }) => void,
-    ) => {
-      realtimeCallback = cb;
-      return mockChannel;
-    },
-  ),
-  subscribe: vi.fn().mockReturnValue(mockChannel),
-};
-
-const mockSupabase = {
-  channel: vi.fn().mockReturnValue(mockChannel),
-  removeChannel: vi.fn(),
-};
+// vi.mock is hoisted to the top of the file, so mockChannel/mockSupabase must be
+// created with vi.hoisted() to be available inside the factory.
+const { mockChannel, mockSupabase } = vi.hoisted(() => {
+  const ch = { on: vi.fn(), subscribe: vi.fn(), send: vi.fn() };
+  ch.subscribe.mockReturnValue(ch);
+  const sb = {
+    channel: vi.fn().mockReturnValue(ch),
+    removeChannel: vi.fn(),
+    realtime: { setAuth: vi.fn() },
+  };
+  return { mockChannel: ch, mockSupabase: sb };
+});
 
 vi.mock("../lib/supabase", () => ({ supabase: mockSupabase }));
 
@@ -75,14 +71,16 @@ function mockMessagesError() {
   });
 }
 
-function mockPostSuccess(newMessage = {
-  id: "msg-003",
-  request_id: REQUEST_ID,
-  sender_id: CURRENT_USER_ID,
-  sender_display_name: "Jamie",
-  content: "See you there!",
-  created_at: "2026-01-01T10:02:00Z",
-}) {
+function mockPostSuccess(
+  newMessage = {
+    id: "msg-003",
+    request_id: REQUEST_ID,
+    sender_id: CURRENT_USER_ID,
+    sender_display_name: "Jamie",
+    content: "See you there!",
+    created_at: "2026-01-01T10:02:00Z",
+  },
+) {
   // First call is GET (mount), second call is POST (send)
   mockApiFetch
     .mockResolvedValueOnce({ ok: true, json: async () => MESSAGES_FIXTURE })
@@ -106,7 +104,7 @@ beforeEach(() => {
     (
       _event: string,
       _filter: unknown,
-      cb: (payload: { new: Record<string, unknown> }) => void,
+      cb: (payload: { payload: Record<string, unknown> }) => void,
     ) => {
       realtimeCallback = cb;
       return mockChannel;
@@ -319,13 +317,8 @@ describe("ChatThreadPage — Supabase Realtime subscription", () => {
       expect.stringContaining(REQUEST_ID),
     );
     expect(mockChannel.on).toHaveBeenCalledWith(
-      "postgres_changes",
-      expect.objectContaining({
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: `request_id=eq.${REQUEST_ID}`,
-      }),
+      "broadcast",
+      expect.objectContaining({ event: "new_message" }),
       expect.any(Function),
     );
     expect(mockChannel.subscribe).toHaveBeenCalled();
@@ -348,8 +341,8 @@ describe("ChatThreadPage — Supabase Realtime subscription", () => {
       created_at: "2026-01-01T10:03:00Z",
     };
 
-    // Simulate a Supabase Realtime INSERT event
-    realtimeCallback?.({ new: incomingMessage });
+    // Simulate a Supabase Realtime Broadcast event
+    realtimeCallback?.({ payload: incomingMessage });
 
     await waitFor(() =>
       expect(
@@ -375,7 +368,7 @@ describe("ChatThreadPage — Supabase Realtime subscription", () => {
 
     // Realtime also fires for the same message — should not duplicate
     realtimeCallback?.({
-      new: {
+      payload: {
         id: "msg-003",
         request_id: REQUEST_ID,
         sender_id: CURRENT_USER_ID,

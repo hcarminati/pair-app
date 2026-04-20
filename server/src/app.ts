@@ -12,10 +12,13 @@ if (process.env["NODE_ENV"] === "production" && !process.env["CLIENT_ORIGIN"]) {
   throw new Error("CLIENT_ORIGIN must be set in production");
 }
 
+const corsOptions = {
+  origin: process.env["CLIENT_ORIGIN"] ?? "http://localhost:5173",
+};
+
 const app = express();
-app.use(
-  cors({ origin: process.env["CLIENT_ORIGIN"] ?? "http://localhost:5173" }),
-);
+app.options(/.*/, cors(corsOptions));
+app.use(cors(corsOptions));
 app.use(express.json());
 
 app.get("/health", (_, res) => {

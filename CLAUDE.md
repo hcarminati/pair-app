@@ -110,6 +110,34 @@ Transitions are enforced **only in the Express backend**, never in client code.
 - Don't surface incomplete couple profiles (one partner unregistered) in the discovery feed
 - Don't add map or geolocation logic — location is a plain text field on both `profiles` (individual) and `pairs` (shared) in v1
 
+## Security
+
+### OWASP Top 10 Awareness
+
+| # | Threat | Mitigation in this project |
+|---|--------|---------------------------|
+| A01 | Broken Access Control | All authorization enforced in Express route handlers; service role key never exposed to frontend |
+| A02 | Cryptographic Failures | No passwords stored — Supabase Auth handles credential storage; JWTs verified on every protected route |
+| A03 | Injection | Supabase JS client uses parameterized queries; no raw SQL concatenation |
+| A04 | Insecure Design | Dual-consent enforced at service layer; connection state transitions only via backend |
+| A05 | Security Misconfiguration | RLS bypassed intentionally on backend only (service role); frontend never holds service role key |
+| A06 | Vulnerable Components | `npm audit` runs in CI; dependencies scanned on every push |
+| A07 | Auth Failures | Supabase Auth issues JWTs; Express middleware verifies on every protected route; tokens not persisted in service role client |
+| A08 | Software Integrity Failures | `npm ci` (lockfile-enforced installs) used in CI |
+| A09 | Logging Failures | Central error-handling middleware in Express; errors never sent raw to client |
+| A10 | SSRF | No outbound HTTP requests from backend to user-supplied URLs |
+
+### Definition of Done — Security Acceptance Criteria
+
+Every feature/PR must satisfy all of the following before merging:
+
+- [ ] No secrets (API keys, tokens, passwords) committed to the repo
+- [ ] No Supabase service role key accessible from the frontend
+- [ ] All new Express routes protected by auth middleware (unless explicitly public)
+- [ ] User input validated and sanitized before use in queries
+- [ ] `npm audit --audit-level=high` passes with no new high/critical vulnerabilities
+- [ ] No raw error details returned to the client
+
 ## Commands
 
 ### Root (from project root)

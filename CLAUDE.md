@@ -15,7 +15,7 @@ Pair is a couples-only friend-matching web app. The unit of identity is a **coup
 | Auth | Supabase Auth — JWTs verified in Express middleware |
 | Real-time | Supabase Realtime (chat threads) |
 | Testing | Vitest + React Testing Library (unit/integration), Playwright (E2E) |
-| Hosting | Vercel (frontend), Render (backend) |
+| Hosting | Netlify (frontend), Render (backend) |
 
 ## Architecture
 
@@ -35,7 +35,7 @@ Pair is a couples-only friend-matching web app. The unit of identity is a **coup
 /e2e             Playwright tests
 ```
 
-- **`client/`** — React 18 SPA using Vite 8, TypeScript, and `react-router-dom` v6. Entry point: `src/main.tsx`. Deployed to Vercel.
+- **`client/`** — React 18 SPA using Vite 8, TypeScript, and `react-router-dom` v6. Entry point: `src/main.tsx`. Deployed to Netlify.
 - **`server/`** — Express 5 REST API using TypeScript. Entry point: `src/index.ts`. Runs on port 3000. Deployed to Render.
 - **Database** — Supabase Postgres. The backend connects using the service role key (bypasses RLS). All authorization is enforced in Express route handlers — the frontend never holds the service role key.
 - **Auth** — Supabase Auth issues JWTs; Express middleware verifies them on every protected route.

@@ -212,7 +212,7 @@ DECLINED           → Request declined at stage 1 or stage 2
 | Data Access | Supabase JS client or `pg` directly | Backend queries Supabase Postgres via the service role key (bypasses RLS — backend enforces access control in code) |
 | Real-time | Supabase Realtime | Powers the live chat thread — subscribed to from the frontend directly |
 | Testing | Vitest + React Testing Library (frontend), Vitest (backend), Playwright (E2E) | TDD across both layers; Playwright covers critical user flows end-to-end |
-| Hosting | Vercel (frontend) + Railway or Render (backend) + Supabase (db) | Zero-config deploys; clean separation of concerns |
+| Hosting | Netlify (frontend) + Render (backend) + Supabase (db) | Zero-config deploys; clean separation of concerns |
 
 ---
 

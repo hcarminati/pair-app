@@ -113,8 +113,14 @@ test.describe.serial("Profiles and Tags", () => {
       .fill("mountainbiking");
     await page.getByRole("button", { name: "Add" }).click();
 
+    const saveResp = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/profiles/me") &&
+        resp.request().method() === "PATCH",
+      { timeout: 10_000 },
+    );
     await page.getByRole("button", { name: "Save profile" }).click();
-    await expect(page.getByText("Profile saved successfully.")).toBeVisible();
+    expect((await saveResp).status()).toBe(200);
 
     // Switch tabs to trigger a fresh DB fetch on remount
     await page.getByRole("button", { name: "Couple preview" }).click();

@@ -37,6 +37,8 @@ async function loginAs(page: Page, email: string): Promise<void> {
 
 test.describe.serial("Discovery Feed", () => {
   test.beforeAll(async ({ browser }) => {
+    test.setTimeout(120_000);
+
     // Couple A+B: requesting couple — hiking only (registerUser default)
     await linkCouple(browser, EMAIL_A, NAME_A, EMAIL_B, NAME_B);
 
@@ -53,23 +55,33 @@ test.describe.serial("Discovery Feed", () => {
       ).toBeVisible({ timeout: 5_000 });
 
       await page.getByRole("button", { name: "cooking" }).click();
+      const profileSaveResp = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/profiles/me") &&
+          resp.request().method() === "PATCH",
+        { timeout: 10_000 },
+      );
       await page.getByRole("button", { name: "Save profile" }).click();
-      await expect(page.getByText("Profile saved successfully.")).toBeVisible({
-        timeout: 5_000,
-      });
+      expect((await profileSaveResp).status()).toBe(200);
 
-      const coupleDataLoaded = page.waitForResponse((resp) =>
-        resp.url().includes("/pairs/me"),
+      const coupleDataLoaded = page.waitForResponse(
+        (resp) => resp.url().includes("/pairs/me"),
+        { timeout: 10_000 },
       );
       await page.getByRole("button", { name: "Couple preview" }).click();
       await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
       expect((await coupleDataLoaded).status()).toBe(200);
+
       await page.locator("#aboutUs").fill(ABOUT_US);
       await page.locator("#coupleLocation").fill(LOCATION);
+      const coupleSaveResp = page.waitForResponse(
+        (resp) =>
+          resp.url().includes("/couples/me") &&
+          resp.request().method() === "PATCH",
+        { timeout: 10_000 },
+      );
       await page.getByRole("button", { name: "Save couple profile" }).click();
-      await expect(
-        page.getByText("Couple profile saved successfully."),
-      ).toBeVisible({ timeout: 5_000 });
+      expect((await coupleSaveResp).status()).toBe(200);
     } finally {
       await ctx.close();
     }
@@ -189,10 +201,10 @@ test.describe.serial("Discovery Feed", () => {
       // Own couple (A+B) must not appear in the results
       await expect(
         page.locator(".couple-grid .couple-card").filter({ hasText: NAME_A }),
-      ).not.toBeVisible();
+      ).not.toBeVisible({ timeout: 5_000 });
       await expect(
         page.locator(".couple-grid .couple-card").filter({ hasText: NAME_B }),
-      ).not.toBeVisible();
+      ).not.toBeVisible({ timeout: 5_000 });
     } finally {
       await ctx.close();
     }

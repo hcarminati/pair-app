@@ -87,7 +87,9 @@ export default function ConnectionsPage() {
               <div key={result.request_id} className="connection-row">
                 <div className="connection-row-avatars">
                   <div className="avatar avatar--lg">{initials1}</div>
-                  <div className="avatar avatar--lg avatar--overlap">{initials2}</div>
+                  <div className="avatar avatar--lg avatar--overlap">
+                    {initials2}
+                  </div>
                 </div>
                 <div className="connection-row-body">
                   <span className="connection-row-name">{names}</span>

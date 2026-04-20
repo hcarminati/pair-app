@@ -30,6 +30,10 @@ const FIXTURE = [
       tags: ["coffee"],
     },
     created_at: "2026-01-01T00:00:00Z",
+    latest_message: {
+      content: "See you there!",
+      created_at: "2026-01-03T00:00:00Z",
+    },
   },
   {
     request_id: "req-002",
@@ -50,6 +54,7 @@ const FIXTURE = [
       tags: ["cooking"],
     },
     created_at: "2026-01-02T00:00:00Z",
+    latest_message: null,
   },
 ];
 
@@ -132,8 +137,8 @@ describe("ConnectionsPage", () => {
     expect(screen.getByText(/alex & jordan/i)).toBeInTheDocument();
   });
 
-  it("displays tags for each connected couple", async () => {
-    mockSuccess();
+  it("shows the latest message content as preview text", async () => {
+    mockSuccess([FIXTURE[0]!]);
     render(
       <MemoryRouter>
         <ConnectionsPage />
@@ -142,9 +147,20 @@ describe("ConnectionsPage", () => {
     await waitFor(() =>
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
-    expect(screen.getByText("hiking")).toBeInTheDocument();
-    expect(screen.getByText("coffee")).toBeInTheDocument();
-    expect(screen.getByText("board games")).toBeInTheDocument();
+    expect(screen.getByText("See you there!")).toBeInTheDocument();
+  });
+
+  it("shows 'Say hi 👋' when latest_message is null", async () => {
+    mockSuccess([FIXTURE[1]!]);
+    render(
+      <MemoryRouter>
+        <ConnectionsPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Say hi 👋")).toBeInTheDocument();
   });
 
   // Connected couples have no outbound interest CTA — connection is already established
@@ -191,7 +207,9 @@ describe("ConnectionsPage", () => {
       </MemoryRouter>,
     );
     await waitFor(() =>
-      expect(screen.getByText(/failed to load connections/i)).toBeInTheDocument(),
+      expect(
+        screen.getByText(/failed to load connections/i),
+      ).toBeInTheDocument(),
     );
   });
 
@@ -230,9 +248,10 @@ describe("ConnectionsPage", () => {
         ...FIXTURE[0]!,
         partner1: null,
         partner2: null,
+        latest_message: null,
       },
     ];
-    mockSuccess(withNulls);
+    mockSuccess(withNulls as unknown as typeof FIXTURE);
     render(
       <MemoryRouter>
         <ConnectionsPage />

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { CoupleCard } from "../components/CoupleCard";
+import { CoupleDetailModal } from "../components/CoupleDetailModal";
 import type { Couple } from "../components/CoupleCard";
+import type { CoupleDetailResult } from "../components/CoupleDetailModal";
 import { apiFetch } from "../lib/api";
 
 interface PartnerDetail {
@@ -47,6 +49,35 @@ function toCouple(r: InboundResult, ownTags: string[]): Couple {
   };
 }
 
+function toDetailResult(
+  r: InboundResult,
+  ownTags: string[],
+): CoupleDetailResult {
+  const p1Name = r.partner1?.display_name ?? "?";
+  const p2Name = r.partner2?.display_name ?? "?";
+  const matching = r.tags.filter((t) => ownTags.includes(t));
+  return {
+    pair_id: r.pair_id ?? r.request_id,
+    about_us: r.about_us,
+    location: r.location,
+    tags: r.tags,
+    matching_tags: matching,
+    shared_count: matching.length,
+    partner1: r.partner1 ?? {
+      display_name: p1Name,
+      about_me: null,
+      location: null,
+      tags: [],
+    },
+    partner2: r.partner2 ?? {
+      display_name: p2Name,
+      about_me: null,
+      location: null,
+      tags: [],
+    },
+  };
+}
+
 function applyInboundData(
   data: InboundResult[],
   setResults: React.Dispatch<React.SetStateAction<InboundResult[]>>,
@@ -76,6 +107,7 @@ export default function InboundRequestsPage() {
     new Map(),
   );
   const [connectedIds, setConnectedIds] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,6 +175,13 @@ export default function InboundRequestsPage() {
 
   const couples = results.map((r) => toCouple(r, ownTags));
 
+  const selectedResult = selectedId
+    ? (results.find((r) => r.request_id === selectedId) ?? null)
+    : null;
+  const selectedCouple = selectedId
+    ? (couples.find((c) => c.id === selectedId) ?? null)
+    : null;
+
   return (
     <div className="app-page">
       <h2 className="app-page-title">Inbound Requests</h2>
@@ -164,8 +203,8 @@ export default function InboundRequestsPage() {
                 <CoupleCard
                   couple={couple}
                   showCta={false}
-                  onClick={() => {}}
-                  onInterested={() => {}}
+                  onClick={() => setSelectedId(couple.id)}
+                  onInterested={() => { }}
                 />
                 <div className="inbound-actions">
                   {connectedIds.has(couple.id) ? (
@@ -201,6 +240,17 @@ export default function InboundRequestsPage() {
             );
           })}
         </div>
+      )}
+
+      {selectedResult && selectedCouple && (
+        <CoupleDetailModal
+          result={toDetailResult(selectedResult, ownTags)}
+          couple={selectedCouple}
+          isInterested={false}
+          onClose={() => setSelectedId(null)}
+          onInterested={() => { }}
+          hideCta
+        />
       )}
     </div>
   );

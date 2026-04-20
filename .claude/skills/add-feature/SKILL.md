@@ -1,7 +1,6 @@
 ---
 name: add-feature
 description: Implement a new Pair app feature using TDD, enforcing dual-consent, tag normalization, connection state machine, and all project business rules.
-version: 2
 ---
 
 Implement a new feature for the Pair app. Follows TDD and enforces all Pair-specific business rules before finishing.

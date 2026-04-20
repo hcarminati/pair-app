@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { CoupleCard } from "../components/CoupleCard";
+import { CoupleDetailModal } from "../components/CoupleDetailModal";
 import type { Couple } from "../components/CoupleCard";
+import type { CoupleDetailResult } from "../components/CoupleDetailModal";
 import { apiFetch } from "../lib/api";
 
 interface PartnerDetail {
@@ -46,6 +48,35 @@ function toCouple(r: PartnerInterestResult, ownTags: string[]): Couple {
   };
 }
 
+function toDetailResult(
+  r: PartnerInterestResult,
+  ownTags: string[],
+): CoupleDetailResult {
+  const p1Name = r.partner1?.display_name ?? "?";
+  const p2Name = r.partner2?.display_name ?? "?";
+  const matching = r.tags.filter((t) => ownTags.includes(t));
+  return {
+    pair_id: r.pair_id ?? r.request_id,
+    about_us: r.about_us,
+    location: r.location,
+    tags: r.tags,
+    matching_tags: matching,
+    shared_count: matching.length,
+    partner1: r.partner1 ?? {
+      display_name: p1Name,
+      about_me: null,
+      location: null,
+      tags: [],
+    },
+    partner2: r.partner2 ?? {
+      display_name: p2Name,
+      about_me: null,
+      location: null,
+      tags: [],
+    },
+  };
+}
+
 export default function PartnerInterestsPage() {
   const [results, setResults] = useState<PartnerInterestResult[]>([]);
   const [ownTags, setOwnTags] = useState<string[]>([]);
@@ -53,6 +84,7 @@ export default function PartnerInterestsPage() {
   const [error, setError] = useState<string | null>(null);
   const [alignedIds, setAlignedIds] = useState<Set<string>>(new Set());
   const [vetoedIds, setVetoedIds] = useState<Set<string>>(new Set());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -99,6 +131,13 @@ export default function PartnerInterestsPage() {
 
   const couples = results.map((r) => toCouple(r, ownTags));
 
+  const selectedResult = selectedId
+    ? (results.find((r) => r.request_id === selectedId) ?? null)
+    : null;
+  const selectedCouple = selectedId
+    ? (couples.find((c) => c.id === selectedId) ?? null)
+    : null;
+
   return (
     <div className="app-page">
       <h2 className="app-page-title">{`Partner's Interests`}</h2>
@@ -118,8 +157,8 @@ export default function PartnerInterestsPage() {
               <CoupleCard
                 couple={couple}
                 showCta={false}
-                onClick={() => {}}
-                onInterested={() => {}}
+                onClick={() => setSelectedId(couple.id)}
+                onInterested={() => { }}
               />
               <div className="inbound-actions">
                 {alignedIds.has(couple.id) ? (
@@ -150,6 +189,17 @@ export default function PartnerInterestsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {selectedResult && selectedCouple && (
+        <CoupleDetailModal
+          result={toDetailResult(selectedResult, ownTags)}
+          couple={selectedCouple}
+          isInterested={false}
+          onClose={() => setSelectedId(null)}
+          onInterested={() => { }}
+          hideCta
+        />
       )}
     </div>
   );

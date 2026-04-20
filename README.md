@@ -3,6 +3,8 @@
 [![CI](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml)
 [![Playwright E2E Tests](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml)
 
+**Live app:** https://pair-app.netlify.app
+
 This project is a monorepo containing a `client` and a `server` application. It uses npm workspaces to manage dependencies across both projects.
 
 ## Prerequisites

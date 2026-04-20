@@ -12,8 +12,31 @@ if (process.env["NODE_ENV"] === "production" && !process.env["CLIENT_ORIGIN"]) {
   throw new Error("CLIENT_ORIGIN must be set in production");
 }
 
+const productionOrigin = process.env["CLIENT_ORIGIN"];
+const netlifyAppName = process.env["NETLIFY_APP_NAME"];
+
 const corsOptions = {
-  origin: process.env["CLIENT_ORIGIN"] ?? "http://localhost:5173",
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void,
+  ) => {
+    // Allow requests with no origin (e.g. server-to-server, curl)
+    if (!origin) return callback(null, true);
+    // Always allow localhost in dev
+    if (!productionOrigin) return callback(null, origin === "http://localhost:5173");
+    // Allow the production origin
+    if (origin === productionOrigin) return callback(null, true);
+    // Allow Netlify deploy previews for the same app
+    if (
+      netlifyAppName &&
+      /^https:\/\/deploy-preview-\d+--/.test(origin) &&
+      origin.endsWith(`.netlify.app`) &&
+      origin.includes(`--${netlifyAppName}.netlify.app`)
+    ) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
 };
 
 const app = express();

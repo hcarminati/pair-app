@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/ci.yml)
 [![Playwright E2E Tests](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/e2e.yml)
+[![Security](https://github.com/hcarminati/pair-app/actions/workflows/security.yml/badge.svg)](https://github.com/hcarminati/pair-app/actions/workflows/security.yml)
 
 **Live app:** https://pair-app.netlify.app
 

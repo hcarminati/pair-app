@@ -60,7 +60,8 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByText("Denver, CO")).toBeInTheDocument();
+    // Location appears at least once (may appear multiple times due to partner locations)
+    expect(screen.getAllByText("Denver, CO").length).toBeGreaterThan(0);
   });
 
   it("renders the about us section when present", () => {
@@ -128,9 +129,10 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    expect(screen.getByText("hiking")).toBeInTheDocument();
-    expect(screen.getByText("cycling")).toBeInTheDocument();
-    expect(screen.getByText("films")).toBeInTheDocument();
+    // Tags appear at least once (may appear multiple times due to partner cards)
+    expect(screen.getAllByText("hiking").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("cycling").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("films").length).toBeGreaterThan(0);
   });
 
   it("marks matching tags with pill--active class", () => {
@@ -143,10 +145,14 @@ describe("CoupleDetailModal", () => {
         onInterested={vi.fn()}
       />,
     );
-    const hikingPill = screen.getByText("hiking");
-    expect(hikingPill).toHaveClass("pill--active");
-    const filmsPill = screen.getByText("films");
-    expect(filmsPill).not.toHaveClass("pill--active");
+    // In the shared interests section, matching tags have pill--active.
+    // hiking is a matching tag — at least one pill with that text should have pill--active.
+    const hikingPills = screen.getAllByText("hiking");
+    expect(hikingPills.some((el) => el.classList.contains("pill--active"))).toBe(true);
+    // films is NOT a matching tag — no pill with that text in the interests section should have pill--active.
+    // (Partner card pills don't get pill--active either.)
+    const filmsPills = screen.getAllByText("films");
+    expect(filmsPills.every((el) => !el.classList.contains("pill--active"))).toBe(true);
   });
 
   it("renders per-partner section with Partners heading", () => {

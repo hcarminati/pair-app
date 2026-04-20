@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { CoupleCard } from "../components/CoupleCard";
-import type { Couple } from "../components/CoupleCard";
 import { apiFetch } from "../lib/api";
 
 interface PartnerDetail {
@@ -19,6 +17,8 @@ interface ConnectedResult {
   partner1: PartnerDetail | null;
   partner2: PartnerDetail | null;
   created_at: string;
+  latest_message: { content: string; created_at: string } | null;
+  unread_count?: number;
 }
 
 function getInitials(name: string): string {
@@ -29,20 +29,14 @@ function getInitials(name: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-function toCouple(r: ConnectedResult): Couple {
-  const p1Name = r.partner1?.display_name ?? "?";
-  const p2Name = r.partner2?.display_name ?? "?";
-  return {
-    id: r.request_id,
-    names: `${p1Name} & ${p2Name}`,
-    initials1: getInitials(p1Name),
-    initials2: getInitials(p2Name),
-    inCommon: 0,
-    interests: r.tags,
-    matching: [],
-    description: r.about_us ?? "",
-    location: r.location ?? "",
-  };
+function formatRelativeTime(isoDate: string): string {
+  const diff = Date.now() - new Date(isoDate).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
 export default function ConnectionsPage() {
@@ -65,8 +59,6 @@ export default function ConnectionsPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const couples = results.map(toCouple);
-
   return (
     <div className="app-page">
       <h2 className="app-page-title">Connections</h2>
@@ -75,21 +67,45 @@ export default function ConnectionsPage() {
         <p className="placeholder-text">Loading…</p>
       ) : error ? (
         <p className="placeholder-text">{error}</p>
-      ) : couples.length === 0 ? (
+      ) : results.length === 0 ? (
         <p className="placeholder-text">
           Your connected couples will appear here.
         </p>
       ) : (
-        <div className="couple-grid">
-          {couples.map((couple) => (
-            <CoupleCard
-              key={couple.id}
-              couple={couple}
-              showCta={false}
-              onClick={() => {}}
-              onInterested={() => {}}
-            />
-          ))}
+        <div className="connections-list">
+          {results.map((result) => {
+            const p1Name = result.partner1?.display_name ?? "?";
+            const p2Name = result.partner2?.display_name ?? "?";
+            const names = `${p1Name} & ${p2Name}`;
+            const initials1 = getInitials(p1Name);
+            const initials2 = getInitials(p2Name);
+            const preview = result.latest_message?.content ?? "";
+
+            const unread = result.unread_count ?? 0;
+
+            return (
+              <div key={result.request_id} className="connection-row">
+                <div className="connection-row-avatars">
+                  <div className="avatar avatar--lg">{initials1}</div>
+                  <div className="avatar avatar--lg avatar--overlap">{initials2}</div>
+                </div>
+                <div className="connection-row-body">
+                  <span className="connection-row-name">{names}</span>
+                  <span className="connection-row-preview">
+                    {preview || "Say hi 👋"}
+                  </span>
+                </div>
+                <div className="connection-row-meta">
+                  <span className="connection-row-time">
+                    {formatRelativeTime(result.created_at)}
+                  </span>
+                  {unread > 0 && (
+                    <span className="connection-row-badge">{unread}</span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

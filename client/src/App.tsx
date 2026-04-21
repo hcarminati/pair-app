@@ -9,6 +9,7 @@ import DiscoveryPage from "./pages/DiscoveryPage";
 import InboundRequestsPage from "./pages/InboundRequestsPage";
 import PartnerInterestsPage from "./pages/PartnerInterestsPage";
 import ConnectionsPage from "./pages/ConnectionsPage";
+import ChatThreadPage from "./pages/ChatThreadPage";
 import { RequireAuth } from "./components/RequireAuth";
 import { RequireAuthAndPaired } from "./components/RequireAuthAndPaired";
 
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/inbound-requests" element={<InboundRequestsPage />} />
           <Route path="/partner-interests" element={<PartnerInterestsPage />} />
           <Route path="/connections" element={<ConnectionsPage />} />
+          <Route path="/chat/:request_id" element={<ChatThreadPage />} />
         </Route>
       </Route>
 

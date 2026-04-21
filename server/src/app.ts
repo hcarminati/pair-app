@@ -4,6 +4,7 @@ import { authRouter } from "./routes/auth.js";
 import { connectionsRouter } from "./routes/connections.js";
 import { couplesRouter } from "./routes/couples.js";
 import { discoveryRouter } from "./routes/discovery.js";
+import { messagesRouter } from "./routes/messages.js";
 import { pairsRouter } from "./routes/pairs.js";
 import { profilesRouter } from "./routes/profiles.js";
 import { usersRouter } from "./routes/users.js";
@@ -52,6 +53,7 @@ app.get("/health", (_, res) => {
 
 app.use("/auth", authRouter);
 app.use("/connections", connectionsRouter);
+app.use("/messages", messagesRouter);
 app.use("/couples", couplesRouter);
 app.use("/discovery", discoveryRouter);
 app.use("/pairs", pairsRouter);

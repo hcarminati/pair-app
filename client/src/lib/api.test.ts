@@ -32,14 +32,18 @@ describe("apiFetch — request headers", () => {
   it("always sets Content-Type: application/json", async () => {
     mockFetch.mockResolvedValue(okResponse());
     await apiFetch("/test");
-    const { headers } = mockFetch.mock.calls[0][1] as { headers: Record<string, string> };
+    const { headers } = mockFetch.mock.calls[0][1] as {
+      headers: Record<string, string>;
+    };
     expect(headers["Content-Type"]).toBe("application/json");
   });
 
   it("omits Authorization when no access token is stored", async () => {
     mockFetch.mockResolvedValue(okResponse());
     await apiFetch("/test");
-    const { headers } = mockFetch.mock.calls[0][1] as { headers: Record<string, string> };
+    const { headers } = mockFetch.mock.calls[0][1] as {
+      headers: Record<string, string>;
+    };
     expect(headers).not.toHaveProperty("Authorization");
   });
 
@@ -47,14 +51,18 @@ describe("apiFetch — request headers", () => {
     setTokens("my-access-token", "refresh");
     mockFetch.mockResolvedValue(okResponse());
     await apiFetch("/test");
-    const { headers } = mockFetch.mock.calls[0][1] as { headers: Record<string, string> };
+    const { headers } = mockFetch.mock.calls[0][1] as {
+      headers: Record<string, string>;
+    };
     expect(headers["Authorization"]).toBe("Bearer my-access-token");
   });
 
   it("merges caller-supplied headers with the defaults", async () => {
     mockFetch.mockResolvedValue(okResponse());
     await apiFetch("/test", { headers: { "X-Custom": "value" } });
-    const { headers } = mockFetch.mock.calls[0][1] as { headers: Record<string, string> };
+    const { headers } = mockFetch.mock.calls[0][1] as {
+      headers: Record<string, string>;
+    };
     expect(headers["Content-Type"]).toBe("application/json");
     expect(headers["X-Custom"]).toBe("value");
   });
@@ -72,7 +80,9 @@ describe("apiFetch — 401 retry flow", () => {
     mockFetch
       .mockResolvedValueOnce(errResponse(401))
       .mockResolvedValueOnce(
-        okResponse({ session: { access_token: "new", refresh_token: "new-r" } }),
+        okResponse({
+          session: { access_token: "new", refresh_token: "new-r" },
+        }),
       )
       .mockResolvedValueOnce(okResponse());
 
@@ -85,12 +95,17 @@ describe("apiFetch — 401 retry flow", () => {
     mockFetch
       .mockResolvedValueOnce(errResponse(401))
       .mockResolvedValueOnce(
-        okResponse({ session: { access_token: "new-token", refresh_token: "new-r" } }),
+        okResponse({
+          session: { access_token: "new-token", refresh_token: "new-r" },
+        }),
       )
       .mockResolvedValueOnce(okResponse());
 
     await apiFetch("/protected");
-    const retryHeaders = mockFetch.mock.calls[2][1].headers as Record<string, string>;
+    const retryHeaders = mockFetch.mock.calls[2][1].headers as Record<
+      string,
+      string
+    >;
     expect(retryHeaders["Authorization"]).toBe("Bearer new-token");
   });
 
@@ -139,7 +154,9 @@ describe("refreshAccessToken", () => {
   it("stores the new tokens and returns true on a successful refresh", async () => {
     setTokens("old-access", "old-refresh");
     mockFetch.mockResolvedValue(
-      okResponse({ session: { access_token: "new-access", refresh_token: "new-refresh" } }),
+      okResponse({
+        session: { access_token: "new-access", refresh_token: "new-refresh" },
+      }),
     );
     const result = await refreshAccessToken();
     expect(result).toBe(true);

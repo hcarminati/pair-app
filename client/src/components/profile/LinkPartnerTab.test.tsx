@@ -139,13 +139,19 @@ describe("LinkPartnerTab — invite token display", () => {
     renderUnpaired({ inviteToken: "ABCD-1234-EFGH" });
     const copyBtn = screen.getByRole("button", { name: /copy link/i });
     await userEvent.click(copyBtn);
-    expect(screen.getByRole("button", { name: /copied!/i })).toBeInTheDocument();
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("ABCD-1234-EFGH");
+    expect(
+      screen.getByRole("button", { name: /copied!/i }),
+    ).toBeInTheDocument();
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      "ABCD-1234-EFGH",
+    );
   });
 
   it("does not show the token box when inviteToken is null", () => {
     renderUnpaired({ inviteToken: null });
-    expect(screen.queryByRole("button", { name: /copy link/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy link/i }),
+    ).not.toBeInTheDocument();
   });
 
   describe("expiry formatting", () => {
@@ -162,25 +168,37 @@ describe("LinkPartnerTab — invite token display", () => {
 
     it("shows hours-based expiry when more than one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 3 * 60 * 60 * 1000).toISOString();
-      renderUnpaired({ inviteToken: "ABCD-1234-EFGH", tokenExpiresAt: expiresAt });
+      renderUnpaired({
+        inviteToken: "ABCD-1234-EFGH",
+        tokenExpiresAt: expiresAt,
+      });
       expect(screen.getByText(/expires in 3 hours/i)).toBeInTheDocument();
     });
 
     it("shows singular 'hour' when exactly one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 1 * 60 * 60 * 1000).toISOString();
-      renderUnpaired({ inviteToken: "ABCD-1234-EFGH", tokenExpiresAt: expiresAt });
+      renderUnpaired({
+        inviteToken: "ABCD-1234-EFGH",
+        tokenExpiresAt: expiresAt,
+      });
       expect(screen.getByText(/expires in 1 hour[^s]/i)).toBeInTheDocument();
     });
 
     it("shows minutes-based expiry when less than one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 25 * 60 * 1000).toISOString();
-      renderUnpaired({ inviteToken: "ABCD-1234-EFGH", tokenExpiresAt: expiresAt });
+      renderUnpaired({
+        inviteToken: "ABCD-1234-EFGH",
+        tokenExpiresAt: expiresAt,
+      });
       expect(screen.getByText(/expires in 25 minutes/i)).toBeInTheDocument();
     });
 
     it("shows 'Expiring soon' when less than one minute remains", () => {
       const expiresAt = new Date(FIXED_NOW + 30 * 1000).toISOString();
-      renderUnpaired({ inviteToken: "ABCD-1234-EFGH", tokenExpiresAt: expiresAt });
+      renderUnpaired({
+        inviteToken: "ABCD-1234-EFGH",
+        tokenExpiresAt: expiresAt,
+      });
       expect(screen.getByText(/expiring soon/i)).toBeInTheDocument();
     });
   });
@@ -189,7 +207,9 @@ describe("LinkPartnerTab — invite token display", () => {
 describe("LinkPartnerTab — link partner form", () => {
   it("shows a validation error when submitting with an empty token", async () => {
     renderUnpaired();
-    await userEvent.click(screen.getByRole("button", { name: /link accounts/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /link accounts/i }),
+    );
     expect(screen.getByText(/partner token is required/i)).toBeInTheDocument();
     expect(mockApiFetch).not.toHaveBeenCalled();
   });
@@ -201,7 +221,9 @@ describe("LinkPartnerTab — link partner form", () => {
       screen.getByLabelText(/partner invite token/i),
       "ABCD-1234-EFGH",
     );
-    await userEvent.click(screen.getByRole("button", { name: /link accounts/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /link accounts/i }),
+    );
     expect(mockApiFetch).toHaveBeenCalledWith("/couples/link", {
       method: "POST",
       body: JSON.stringify({ token: "ABCD-1234-EFGH" }),
@@ -216,7 +238,9 @@ describe("LinkPartnerTab — link partner form", () => {
       screen.getByLabelText(/partner invite token/i),
       "ABCD-1234-EFGH",
     );
-    await userEvent.click(screen.getByRole("button", { name: /link accounts/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /link accounts/i }),
+    );
     const btn = screen.getByRole("button", { name: /linking…/i });
     expect(btn).toBeDisabled();
     resolve!({ ok: true });
@@ -232,7 +256,9 @@ describe("LinkPartnerTab — link partner form", () => {
       screen.getByLabelText(/partner invite token/i),
       "BAD-TOKEN",
     );
-    await userEvent.click(screen.getByRole("button", { name: /link accounts/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /link accounts/i }),
+    );
     await screen.findByText("Invalid or expired token");
   });
 
@@ -243,7 +269,9 @@ describe("LinkPartnerTab — link partner form", () => {
       screen.getByLabelText(/partner invite token/i),
       "ABCD-1234-EFGH",
     );
-    await userEvent.click(screen.getByRole("button", { name: /link accounts/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /link accounts/i }),
+    );
     await waitFor(() => expect(mockSetIsPaired).toHaveBeenCalledWith(true));
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });

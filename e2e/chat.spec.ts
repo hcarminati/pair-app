@@ -45,7 +45,13 @@ test.describe.serial("Connections and Chat", () => {
     // ── Step 1: Register and link all three couples ──────────────────────────
     await linkCouple(browser, EMAIL_C1A, "Conn Alice", EMAIL_C1B, "Conn Bob");
     await linkCouple(browser, EMAIL_C2A, "Conn Carol", EMAIL_C2B, "Conn Dave");
-    await linkCouple(browser, EMAIL_OUT_A, "Conn Eve", EMAIL_OUT_B, "Conn Frank");
+    await linkCouple(
+      browser,
+      EMAIL_OUT_A,
+      "Conn Eve",
+      EMAIL_OUT_B,
+      "Conn Frank",
+    );
 
     // ── Step 2a: C1A expresses interest in C2 → capture REQUEST_ID ──────────
     const ctxC1A = await browser.newContext();
@@ -117,9 +123,9 @@ test.describe.serial("Connections and Chat", () => {
         timeout: 10_000,
       });
       expect((await inboundRespPromise).status()).toBe(200);
-      await expect(
-        pageC2A.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageC2A.getByRole("button", { name: "Accept" })).toBeVisible(
+        { timeout: 10_000 },
+      );
       const respondRespPromise = pageC2A.waitForResponse(
         (resp) =>
           resp.url().includes("/connections/") &&
@@ -142,16 +148,16 @@ test.describe.serial("Connections and Chat", () => {
       ).toBeVisible({ timeout: 10_000 });
       const inboundRespPromise = pageC2B.waitForResponse(
         (resp) => resp.url().includes("/connections/inbound"),
-        { timeout: 10_000,},
+        { timeout: 10_000 },
       );
       await pageC2B.getByRole("link", { name: "Inbound Requests" }).click();
       await expect(pageC2B).toHaveURL("/inbound-requests", {
         timeout: 10_000,
       });
       expect((await inboundRespPromise).status()).toBe(200);
-      await expect(
-        pageC2B.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageC2B.getByRole("button", { name: "Accept" })).toBeVisible(
+        { timeout: 10_000 },
+      );
       const respondRespPromise = pageC2B.waitForResponse(
         (resp) =>
           resp.url().includes("/connections/") &&

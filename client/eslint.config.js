@@ -5,7 +5,14 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 
 export default tseslint.config(
-  { ignores: ["**/dist/**", "**/node_modules/**", "vite.config.ts"] },
+  {
+    ignores: [
+      "**/dist/**",
+      "**/node_modules/**",
+      "**/coverage/**",
+      "vite.config.ts",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

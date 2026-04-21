@@ -1,0 +1,15 @@
+# False positives — "ABCD-1234-EFGH" is a dummy invite token used as a test fixture,
+# not a real secret. The string was later renamed to "TEST-LINK-TOKEN" to avoid triggering
+# entropy heuristics, but these fingerprints cover the historical commits.
+fce5cfeb7ba8f900957c0bc1095cc6b5110b325f:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:172
+fce5cfeb7ba8f900957c0bc1095cc6b5110b325f:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:181
+fce5cfeb7ba8f900957c0bc1095cc6b5110b325f:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:190
+fce5cfeb7ba8f900957c0bc1095cc6b5110b325f:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:199
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:129
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:134
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:139
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:165
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:171
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:177
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:183
+da5e6e8f1ec6458ac9abf9c840e3e40734318cba:client/src/components/profile/LinkPartnerTab.test.tsx:generic-api-key:207

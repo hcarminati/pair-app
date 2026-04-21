@@ -126,24 +126,24 @@ describe("LinkPartnerTab — invite token display", () => {
   });
 
   it("shows the invite token in the token box", () => {
-    renderUnpaired({ inviteToken: "ABCD-1234-EFGH" });
-    expect(screen.getByText("ABCD-1234-EFGH")).toBeInTheDocument();
+    renderUnpaired({ inviteToken: "TEST-LINK-TOKEN" });
+    expect(screen.getByText("TEST-LINK-TOKEN")).toBeInTheDocument();
   });
 
   it("shows 'Expires in 72 hours' when tokenExpiresAt is null", () => {
-    renderUnpaired({ inviteToken: "ABCD-1234-EFGH", tokenExpiresAt: null });
+    renderUnpaired({ inviteToken: "TEST-LINK-TOKEN", tokenExpiresAt: null });
     expect(screen.getByText(/expires in 72 hours/i)).toBeInTheDocument();
   });
 
   it("shows 'Copied!' after clicking the copy button", async () => {
-    renderUnpaired({ inviteToken: "ABCD-1234-EFGH" });
+    renderUnpaired({ inviteToken: "TEST-LINK-TOKEN" });
     const copyBtn = screen.getByRole("button", { name: /copy link/i });
     await userEvent.click(copyBtn);
     expect(
       screen.getByRole("button", { name: /copied!/i }),
     ).toBeInTheDocument();
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      "ABCD-1234-EFGH",
+      "TEST-LINK-TOKEN",
     );
   });
 
@@ -169,7 +169,7 @@ describe("LinkPartnerTab — invite token display", () => {
     it("shows hours-based expiry when more than one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 3 * 60 * 60 * 1000).toISOString();
       renderUnpaired({
-        inviteToken: "ABCD-1234-EFGH",
+        inviteToken: "TEST-LINK-TOKEN",
         tokenExpiresAt: expiresAt,
       });
       expect(screen.getByText(/expires in 3 hours/i)).toBeInTheDocument();
@@ -178,7 +178,7 @@ describe("LinkPartnerTab — invite token display", () => {
     it("shows singular 'hour' when exactly one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 1 * 60 * 60 * 1000).toISOString();
       renderUnpaired({
-        inviteToken: "ABCD-1234-EFGH",
+        inviteToken: "TEST-LINK-TOKEN",
         tokenExpiresAt: expiresAt,
       });
       expect(screen.getByText(/expires in 1 hour[^s]/i)).toBeInTheDocument();
@@ -187,7 +187,7 @@ describe("LinkPartnerTab — invite token display", () => {
     it("shows minutes-based expiry when less than one hour remains", () => {
       const expiresAt = new Date(FIXED_NOW + 25 * 60 * 1000).toISOString();
       renderUnpaired({
-        inviteToken: "ABCD-1234-EFGH",
+        inviteToken: "TEST-LINK-TOKEN",
         tokenExpiresAt: expiresAt,
       });
       expect(screen.getByText(/expires in 25 minutes/i)).toBeInTheDocument();
@@ -196,7 +196,7 @@ describe("LinkPartnerTab — invite token display", () => {
     it("shows 'Expiring soon' when less than one minute remains", () => {
       const expiresAt = new Date(FIXED_NOW + 30 * 1000).toISOString();
       renderUnpaired({
-        inviteToken: "ABCD-1234-EFGH",
+        inviteToken: "TEST-LINK-TOKEN",
         tokenExpiresAt: expiresAt,
       });
       expect(screen.getByText(/expiring soon/i)).toBeInTheDocument();
@@ -219,14 +219,14 @@ describe("LinkPartnerTab — link partner form", () => {
     renderUnpaired();
     await userEvent.type(
       screen.getByLabelText(/partner invite token/i),
-      "ABCD-1234-EFGH",
+      "TEST-LINK-TOKEN",
     );
     await userEvent.click(
       screen.getByRole("button", { name: /link accounts/i }),
     );
     expect(mockApiFetch).toHaveBeenCalledWith("/couples/link", {
       method: "POST",
-      body: JSON.stringify({ token: "ABCD-1234-EFGH" }),
+      body: JSON.stringify({ token: "TEST-LINK-TOKEN" }),
     });
   });
 
@@ -236,7 +236,7 @@ describe("LinkPartnerTab — link partner form", () => {
     renderUnpaired();
     await userEvent.type(
       screen.getByLabelText(/partner invite token/i),
-      "ABCD-1234-EFGH",
+      "TEST-LINK-TOKEN",
     );
     await userEvent.click(
       screen.getByRole("button", { name: /link accounts/i }),
@@ -267,7 +267,7 @@ describe("LinkPartnerTab — link partner form", () => {
     renderUnpaired();
     await userEvent.type(
       screen.getByLabelText(/partner invite token/i),
-      "ABCD-1234-EFGH",
+      "TEST-LINK-TOKEN",
     );
     await userEvent.click(
       screen.getByRole("button", { name: /link accounts/i }),

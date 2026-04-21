@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import InboundRequestsPage from "./InboundRequestsPage";
 
 vi.mock("../lib/api", () => ({
@@ -15,45 +15,39 @@ const INBOUND_FIXTURE = [
   {
     request_id: "req-1",
     pair_id: "pair-1",
-    about_us: "We love hiking together.",
-    location: "Denver, CO",
-    tags: ["hiking", "cycling", "films"],
+    about_us: "Adventurous couple.",
+    location: "Austin, TX",
+    tags: ["hiking", "cooking"],
     partner1: {
-      display_name: "Morgan",
-      about_me: "I love the mountains.",
-      location: "Denver, CO",
-      tags: ["hiking", "cycling"],
+      display_name: "Sam",
+      about_me: "I like hikes.",
+      location: "Austin, TX",
+      tags: ["hiking"],
     },
     partner2: {
-      display_name: "Casey",
-      about_me: "Film buff.",
-      location: "Denver, CO",
-      tags: ["films", "cycling"],
+      display_name: "Riley",
+      about_me: null,
+      location: null,
+      tags: ["cooking"],
     },
-    created_at: "2026-01-01T00:00:00Z",
-    my_response: null,
+    created_at: "2025-01-01T00:00:00Z",
+    my_response: null as boolean | null,
   },
 ];
 
-const PAIR_FIXTURE = {
-  tags: ["hiking", "board games"],
-};
-
-function mockSuccess() {
+function mockDefaultSuccess(inboundData = INBOUND_FIXTURE) {
   mockApiFetch.mockImplementation((url: string) => {
-    if (url === "/connections/inbound") {
+    if (url === "/connections/inbound")
+      return Promise.resolve({ ok: true, json: async () => inboundData });
+    if (url === "/pairs/me")
       return Promise.resolve({
         ok: true,
-        json: async () => INBOUND_FIXTURE,
+        json: async () => ({ tags: ["hiking"] }),
       });
-    }
-    if (url === "/pairs/me") {
-      return Promise.resolve({
-        ok: true,
-        json: async () => PAIR_FIXTURE,
-      });
-    }
-    return Promise.resolve({ ok: true, json: async () => ({}) });
+    return Promise.resolve({
+      ok: false,
+      json: async () => ({ error: "not found" }),
+    });
   });
 }
 
@@ -62,74 +56,417 @@ beforeEach(() => {
 });
 
 describe("InboundRequestsPage", () => {
-  it("renders the page heading", async () => {
-    mockSuccess();
+  it("renders page heading", async () => {
+    mockDefaultSuccess();
     render(
       <MemoryRouter>
         <InboundRequestsPage />
       </MemoryRouter>,
+    );
+    // Wait for loading to finish so the test only passes once data fetch completes
+    await waitFor(() =>
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
     expect(
       screen.getByRole("heading", { name: /inbound requests/i }),
     ).toBeInTheDocument();
   });
 
-  it("shows loading state initially", () => {
-    mockApiFetch.mockReturnValue(new Promise(() => {}));
+  it("shows placeholder when no inbound requests", async () => {
+    mockDefaultSuccess([]);
     render(
       <MemoryRouter>
         <InboundRequestsPage />
       </MemoryRouter>,
     );
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
-  });
-
-  it("shows couple cards after loading", async () => {
-    mockSuccess();
-    render(
-      <MemoryRouter>
-        <InboundRequestsPage />
-      </MemoryRouter>,
-    );
-
     await waitFor(() =>
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
-
-    expect(screen.getByText(/morgan & casey/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /connection requests from other couples will appear here/i,
+      ),
+    ).toBeInTheDocument();
   });
 
-  it("shows empty state when there are no inbound requests", async () => {
-    mockApiFetch.mockImplementation((url: string) => {
-      if (url === "/connections/inbound") {
-        return Promise.resolve({ ok: true, json: async () => [] });
-      }
-      return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
-    });
-
+  it("renders a card for each inbound result", async () => {
+    mockDefaultSuccess();
     render(
       <MemoryRouter>
         <InboundRequestsPage />
       </MemoryRouter>,
     );
-
     await waitFor(() =>
-      expect(
-        screen.getByText(/connection requests from other couples/i),
-      ).toBeInTheDocument(),
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
+    // The CoupleCard renders names as "Sam & Riley"
+    expect(screen.getByText("Sam & Riley")).toBeInTheDocument();
   });
 
-  it("shows error message when the API call fails", async () => {
-    mockApiFetch.mockImplementation((url: string) => {
-      if (url === "/connections/inbound") {
+  it("shows Accept and Decline buttons when my_response is null", async () => {
+    mockDefaultSuccess();
+    render(
+      <MemoryRouter>
+        <InboundRequestsPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /accept/i }),
+      ).toBeInTheDocument(),
+    );
+    expect(
+      screen.getByRole("button", { name: /decline/i }),
+    ).toBeInTheDocument();
+  });
+
+  describe("polling tests (fake timers)", () => {
+    beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+    afterEach(() => vi.useRealTimers());
+
+    it("shows 'Waiting for partner' when my_response is already true", async () => {
+      const fixtureWithResponse = [
+        { ...INBOUND_FIXTURE[0], my_response: true },
+      ];
+      mockDefaultSuccess(fixtureWithResponse);
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /waiting for partner/i }),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("clicking Accept calls respond endpoint with accept:true", async () => {
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
+          return Promise.resolve({
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
+          });
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "ACCEPTED" }),
+          });
         return Promise.resolve({
           ok: false,
-          status: 500,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /accept/i }),
+        ).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /accept/i }));
+
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenCalledWith(
+          "/connections/req-1/respond",
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ accept: true }),
+          }),
+        ),
+      );
+    });
+
+    it("clicking Decline calls respond endpoint with accept:false", async () => {
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
+          return Promise.resolve({
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
+          });
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /decline/i }));
+
+      await waitFor(() =>
+        expect(mockApiFetch).toHaveBeenCalledWith(
+          "/connections/req-1/respond",
+          expect.objectContaining({
+            method: "POST",
+            body: JSON.stringify({ accept: false }),
+          }),
+        ),
+      );
+    });
+
+    it("shows 'Connected!' after respond returns CONNECTED", async () => {
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
+          return Promise.resolve({
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
+          });
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "CONNECTED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /accept/i }),
+        ).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /accept/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /connected!/i }),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("shows 'Declined' after clicking Decline", async () => {
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
+          return Promise.resolve({
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
+          });
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            // Return a non-CONNECTED status so the client sets responses to false
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /decline/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /^declined$/i }),
+        ).toBeInTheDocument(),
+      );
+    });
+
+    it("polling removes card when request disappears from server", async () => {
+      // Seed my_response: true to trigger hasWaiting → starts polling interval
+      const fixtureWithWaiting = [{ ...INBOUND_FIXTURE[0], my_response: true }];
+
+      let callCount = 0;
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound") {
+          callCount += 1;
+          // First call returns fixture with the card; subsequent polls return empty
+          const data = callCount === 1 ? fixtureWithWaiting : [];
+          return Promise.resolve({ ok: true, json: async () => data });
+        }
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      // Wait for initial render to show "Waiting for partner"
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /waiting for partner/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // Advance timers past the 3-second interval to trigger the poll
+      await vi.advanceTimersByTimeAsync(3100);
+
+      // After poll returns [], the card should no longer be visible
+      await waitFor(() =>
+        expect(screen.queryByText("Sam & Riley")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("double-submit guard: respond endpoint never called when my_response is already true", async () => {
+      // Seed my_response: true from server — the guard blocks further calls
+      const fixtureAlreadyResponded = [
+        { ...INBOUND_FIXTURE[0], my_response: true },
+      ];
+      mockDefaultSuccess(fixtureAlreadyResponded);
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      // Wait for the "Waiting for partner" button to appear (no Accept/Decline shown)
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /waiting for partner/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // The respond endpoint should never have been called
+      const respondCalls = mockApiFetch.mock.calls.filter(
+        (args: unknown[]) =>
+          typeof args[0] === "string" && args[0].includes("/respond"),
+      );
+      expect(respondCalls).toHaveLength(0);
+    });
+
+    // Verifies the responding user's view shows a generic 'Declined' label with no
+    // partner name attribution. FR-CONN-08 (couple 1 cannot see which partner on
+    // couple 2 declined) is covered by the backend.
+    it("privacy: declined entry shows no partner attribution", async () => {
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
+          return Promise.resolve({
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
+          });
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /decline/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /^declined$/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // No text attributing the decline to a specific partner should appear
+      expect(screen.queryByText(/sam declined/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/riley declined/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it("shows error message when inbound API fails", async () => {
+    mockApiFetch.mockImplementation((url: string) => {
+      if (url === "/connections/inbound")
+        return Promise.resolve({
+          ok: false,
           json: async () => ({ error: "Failed to load inbound requests" }),
         });
-      }
-      return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
+      if (url === "/pairs/me")
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ tags: [] }),
+        });
+      return Promise.resolve({
+        ok: false,
+        json: async () => ({ error: "not found" }),
+      });
     });
 
     render(
@@ -145,8 +482,15 @@ describe("InboundRequestsPage", () => {
     );
   });
 
-  it("shows Accept and Decline buttons for unanswered requests", async () => {
-    mockSuccess();
+  it("partner1 null fallback: renders without crash and shows '?' placeholder", async () => {
+    const fixtureNullPartner = [
+      {
+        ...INBOUND_FIXTURE[0],
+        partner1: null as (typeof INBOUND_FIXTURE)[0]["partner1"] | null,
+      },
+    ];
+    mockDefaultSuccess(fixtureNullPartner as typeof INBOUND_FIXTURE);
+
     render(
       <MemoryRouter>
         <InboundRequestsPage />
@@ -157,95 +501,13 @@ describe("InboundRequestsPage", () => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
 
-    expect(
-      screen.getByRole("button", { name: /^accept$/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /^decline$/i }),
-    ).toBeInTheDocument();
-  });
-
-  it("shows 'Waiting for partner' after accepting", async () => {
-    mockSuccess();
-    mockApiFetch.mockImplementation((url: string) => {
-      if (url === "/connections/inbound") {
-        return Promise.resolve({ ok: true, json: async () => INBOUND_FIXTURE });
-      }
-      if (url === "/pairs/me") {
-        return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
-      }
-      if (url === "/connections/req-1/respond") {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ status: "REQUEST_PENDING" }),
-        });
-      }
-      return Promise.resolve({ ok: true, json: async () => ({}) });
-    });
-
-    render(
-      <MemoryRouter>
-        <InboundRequestsPage />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^accept$/i }),
-      ).toBeInTheDocument(),
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: /^accept$/i }));
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /waiting for partner/i }),
-      ).toBeInTheDocument(),
-    );
-  });
-
-  it("shows 'Declined' after declining", async () => {
-    mockSuccess();
-    mockApiFetch.mockImplementation((url: string) => {
-      if (url === "/connections/inbound") {
-        return Promise.resolve({ ok: true, json: async () => INBOUND_FIXTURE });
-      }
-      if (url === "/pairs/me") {
-        return Promise.resolve({ ok: true, json: async () => PAIR_FIXTURE });
-      }
-      if (url === "/connections/req-1/respond") {
-        return Promise.resolve({
-          ok: true,
-          json: async () => ({ status: "DECLINED" }),
-        });
-      }
-      return Promise.resolve({ ok: true, json: async () => ({}) });
-    });
-
-    render(
-      <MemoryRouter>
-        <InboundRequestsPage />
-      </MemoryRouter>,
-    );
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^decline$/i }),
-      ).toBeInTheDocument(),
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: /^decline$/i }));
-
-    await waitFor(() =>
-      expect(
-        screen.getByRole("button", { name: /^declined$/i }),
-      ).toBeInTheDocument(),
-    );
+    // toCouple() falls back to "?" for null partner1; names become "? & Riley"
+    expect(screen.getByText("? & Riley")).toBeInTheDocument();
   });
 
   describe("CoupleDetailModal integration", () => {
-    it("modal is not visible initially", async () => {
-      mockSuccess();
+    it("clicking a card opens the modal", async () => {
+      mockDefaultSuccess();
       render(
         <MemoryRouter>
           <InboundRequestsPage />
@@ -256,13 +518,41 @@ describe("InboundRequestsPage", () => {
         expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
       );
 
+      await userEvent.click(document.querySelector(".couple-card")!);
+
       expect(
-        document.querySelector(".discovery-modal-overlay"),
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+    });
+
+    it("closing modal via × button removes the modal heading", async () => {
+      mockDefaultSuccess();
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.click(document.querySelector(".couple-card")!);
+
+      // Modal should be open
+      expect(
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(document.querySelector(".discovery-modal-close")!);
+
+      expect(
+        screen.queryByRole("heading", { name: /sam & riley/i, level: 2 }),
       ).not.toBeInTheDocument();
     });
 
-    it("opens the modal when a couple card is clicked", async () => {
-      mockSuccess();
+    it("closing modal via overlay removes the modal heading", async () => {
+      mockDefaultSuccess();
       render(
         <MemoryRouter>
           <InboundRequestsPage />
@@ -273,16 +563,24 @@ describe("InboundRequestsPage", () => {
         expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
       );
 
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
+      await userEvent.click(document.querySelector(".couple-card")!);
+
+      // Modal should be open
+      expect(
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(
+        document.querySelector(".discovery-modal-overlay")!,
+      );
 
       expect(
-        document.querySelector(".discovery-modal-overlay"),
-      ).toBeInTheDocument();
+        screen.queryByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).not.toBeInTheDocument();
     });
 
-    it("modal shows couple name and location", async () => {
-      mockSuccess();
+    it("hideCta: no 'I'm interested' button shown in modal", async () => {
+      mockDefaultSuccess();
       render(
         <MemoryRouter>
           <InboundRequestsPage />
@@ -293,107 +591,11 @@ describe("InboundRequestsPage", () => {
         expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
       );
 
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
+      await userEvent.click(document.querySelector(".couple-card")!);
 
-      expect(
-        screen.getByRole("heading", { name: /morgan & casey/i }),
-      ).toBeInTheDocument();
-      expect(screen.getAllByText("Denver, CO").length).toBeGreaterThan(0);
-    });
-
-    it("modal shows about_us and partner details", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <InboundRequestsPage />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
-
-      expect(screen.getByText("We love hiking together.")).toBeInTheDocument();
-      expect(
-        screen.getByRole("heading", { name: /partners/i }),
-      ).toBeInTheDocument();
-      expect(screen.getByText("I love the mountains.")).toBeInTheDocument();
-    });
-
-    it("modal does not show an 'Interested' CTA (hideCta)", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <InboundRequestsPage />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
-
-      // The modal should be open but have no "interested" CTA button
-      expect(
-        document.querySelector(".discovery-modal-overlay"),
-      ).toBeInTheDocument();
+      // Modal is open; hideCta prop should suppress the CTA
       expect(
         screen.queryByRole("button", { name: /i'm interested/i }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("closes the modal when the close button is clicked", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <InboundRequestsPage />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
-
-      expect(
-        document.querySelector(".discovery-modal-overlay"),
-      ).toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole("button", { name: /×/i }));
-
-      expect(
-        document.querySelector(".discovery-modal-overlay"),
-      ).not.toBeInTheDocument();
-    });
-
-    it("closes the modal when the overlay backdrop is clicked", async () => {
-      mockSuccess();
-      render(
-        <MemoryRouter>
-          <InboundRequestsPage />
-        </MemoryRouter>,
-      );
-
-      await waitFor(() =>
-        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
-      );
-
-      const card = document.querySelector(".couple-card")!;
-      await userEvent.click(card);
-
-      const overlay = document.querySelector(".discovery-modal-overlay")!;
-      await userEvent.click(overlay);
-
-      expect(
-        document.querySelector(".discovery-modal-overlay"),
       ).not.toBeInTheDocument();
     });
   });

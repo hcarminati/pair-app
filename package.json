@@ -17,6 +17,10 @@
     "test:client": "npm run test --workspace=client",
     "test:server": "npm run test --workspace=server",
     "test": "npm run test:client && npm run test:server",
+    "test:ui:client": "npm run test:ui --workspace=client",
+    "test:ui:server": "npm run test:ui --workspace=server",
+    "test:coverage:client": "npm run test:coverage --workspace=client",
+    "test:coverage:server": "npm run test:coverage --workspace=server",
     "test:e2e": "playwright test",
     "test:e2e:headless": "CI=true playwright test",
     "test:e2e:report": "playwright show-report"

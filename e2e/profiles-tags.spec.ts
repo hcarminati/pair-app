@@ -74,14 +74,24 @@ test.describe.serial("Profiles and Tags", () => {
     await page.locator("#aboutMe").fill("I love hiking and exploring.");
     await page.locator("#profileLocation").fill("Denver, CO");
 
+    // Guard: .profile-display-name renders {displayName} from React state (not the
+    // native input value), so it only updates after React flushes the setState call.
+    // Without this, handleSave() can run with a stale displayName closure.
+    await expect(page.locator(".profile-display-name")).toHaveText(
+      "Updated User A",
+      {
+        timeout: 5_000,
+      },
+    );
+
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(page.getByText("Profile saved successfully.")).toBeVisible();
 
     // Switch to another tab and back — unmount/remount triggers a fresh DB fetch
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
-    const profileLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/profiles/me"),
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/profiles/me"),
     );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
@@ -113,14 +123,27 @@ test.describe.serial("Profiles and Tags", () => {
       .fill("mountainbiking");
     await page.getByRole("button", { name: "Add" }).click();
 
+    // Wait until all 4 tags are confirmed selected before saving.
+    // Playwright clicks faster than React flushes state, so without this guard
+    // the PATCH can fire before one or more toggles have been committed.
+    await expect(page.getByText("4 / 10 selected")).toBeVisible({
+      timeout: 5_000,
+    });
+
+    const saveResp = page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/profiles/me") &&
+        resp.request().method() === "PATCH",
+      { timeout: 10_000 },
+    );
     await page.getByRole("button", { name: "Save profile" }).click();
-    await expect(page.getByText("Profile saved successfully.")).toBeVisible();
+    expect((await saveResp).status()).toBe(200);
 
     // Switch tabs to trigger a fresh DB fetch on remount
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
-    const profileLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/profiles/me"),
+    const profileLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/profiles/me"),
     );
     await page.getByRole("button", { name: "My profile" }).click();
     await expect(
@@ -138,8 +161,8 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
-    const coupleDataLoaded1 = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded1 = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
@@ -158,8 +181,8 @@ test.describe.serial("Profiles and Tags", () => {
     await expect(
       page.getByRole("button", { name: "Save profile" }),
     ).toBeVisible({ timeout: 5_000 });
-    const coupleDataLoaded2 = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded2 = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });
@@ -186,8 +209,8 @@ test.describe.serial("Profiles and Tags", () => {
     await loginAs(page, EMAIL_A);
     await goToProfile(page);
 
-    const coupleDataLoaded = page.waitForResponse(
-      (resp) => resp.url().includes("/pairs/me"),
+    const coupleDataLoaded = page.waitForResponse((resp) =>
+      resp.url().includes("/pairs/me"),
     );
     await page.getByRole("button", { name: "Couple preview" }).click();
     await expect(page.locator("#aboutUs")).toBeVisible({ timeout: 5_000 });

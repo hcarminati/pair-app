@@ -178,6 +178,31 @@ test.describe.serial("Connection Alignment Flow", () => {
       await expect(
         pageC.getByRole("button", { name: "Accept" }),
       ).toBeVisible({ timeout: 10_000 });
+
+      // Also verify User D (Couple 2's other partner) sees the same inbound request
+      const ctxD = await browser.newContext();
+      try {
+        const pageD = await ctxD.newPage();
+        await loginAs(pageD, EMAIL_D);
+        await expect(
+          pageD.getByRole("heading", { name: "Discover couples" }),
+        ).toBeVisible({ timeout: 10_000 });
+        const inboundRespD = pageD.waitForResponse(
+          (resp) => resp.url().includes("/connections/inbound"),
+          { timeout: 10_000 },
+        );
+        await pageD.getByRole("link", { name: "Inbound Requests" }).click();
+        await expect(pageD).toHaveURL("/inbound-requests", { timeout: 10_000 });
+        expect((await inboundRespD).status()).toBe(200);
+        await expect(
+          pageD.locator(".couple-grid .couple-card").first(),
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(
+          pageD.getByRole("button", { name: "Accept" }),
+        ).toBeVisible({ timeout: 10_000 });
+      } finally {
+        await ctxD.close();
+      }
     } finally {
       await ctxB.close();
       await ctxC.close();

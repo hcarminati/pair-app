@@ -74,6 +74,13 @@ test.describe.serial("Profiles and Tags", () => {
     await page.locator("#aboutMe").fill("I love hiking and exploring.");
     await page.locator("#profileLocation").fill("Denver, CO");
 
+    // Guard: .profile-display-name renders {displayName} from React state (not the
+    // native input value), so it only updates after React flushes the setState call.
+    // Without this, handleSave() can run with a stale displayName closure.
+    await expect(page.locator(".profile-display-name")).toHaveText("Updated User A", {
+      timeout: 5_000,
+    });
+
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(page.getByText("Profile saved successfully.")).toBeVisible();
 
@@ -112,6 +119,13 @@ test.describe.serial("Profiles and Tags", () => {
       .locator("input[placeholder='Add custom tag']")
       .fill("mountainbiking");
     await page.getByRole("button", { name: "Add" }).click();
+
+    // Wait until all 4 tags are confirmed selected before saving.
+    // Playwright clicks faster than React flushes state, so without this guard
+    // the PATCH can fire before one or more toggles have been committed.
+    await expect(page.getByText("4 / 10 selected")).toBeVisible({
+      timeout: 5_000,
+    });
 
     const saveResp = page.waitForResponse(
       (resp) =>

@@ -63,6 +63,10 @@ describe("InboundRequestsPage", () => {
         <InboundRequestsPage />
       </MemoryRouter>,
     );
+    // Wait for loading to finish so the test only passes once data fetch completes
+    await waitFor(() =>
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+    );
     expect(
       screen.getByRole("heading", { name: /inbound requests/i }),
     ).toBeInTheDocument();
@@ -315,6 +319,129 @@ describe("InboundRequestsPage", () => {
         ).toBeInTheDocument(),
       );
     });
+
+    it("polling removes card when request disappears from server", async () => {
+      // Seed my_response: true to trigger hasWaiting → starts polling interval
+      const fixtureWithWaiting = [{ ...INBOUND_FIXTURE[0], my_response: true }];
+
+      let callCount = 0;
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound") {
+          callCount += 1;
+          // First call returns fixture with the card; subsequent polls return empty
+          const data = callCount === 1 ? fixtureWithWaiting : [];
+          return Promise.resolve({ ok: true, json: async () => data });
+        }
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      // Wait for initial render to show "Waiting for partner"
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /waiting for partner/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // Advance timers past the 3-second interval to trigger the poll
+      await vi.advanceTimersByTimeAsync(3100);
+
+      // After poll returns [], the card should no longer be visible
+      await waitFor(() =>
+        expect(screen.queryByText("Sam & Riley")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("double-submit guard: respond endpoint never called when my_response is already true", async () => {
+      // Seed my_response: true from server — the guard blocks further calls
+      const fixtureAlreadyResponded = [
+        { ...INBOUND_FIXTURE[0], my_response: true },
+      ];
+      mockDefaultSuccess(fixtureAlreadyResponded);
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      // Wait for the "Waiting for partner" button to appear (no Accept/Decline shown)
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /waiting for partner/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // The respond endpoint should never have been called
+      const respondCalls = mockApiFetch.mock.calls.filter(
+        ([url]: [string]) => typeof url === "string" && url.includes("/respond"),
+      );
+      expect(respondCalls).toHaveLength(0);
+    });
+
+    // Verifies the responding user's view shows a generic 'Declined' label with no
+    // partner name attribution. FR-CONN-08 (couple 1 cannot see which partner on
+    // couple 2 declined) is covered by the backend.
+    it("privacy: declined entry shows no partner attribution", async () => {
+      mockApiFetch.mockImplementation(
+        (url: string) => {
+          if (url === "/connections/inbound")
+            return Promise.resolve({
+              ok: true,
+              json: async () => INBOUND_FIXTURE,
+            });
+          if (url === "/pairs/me")
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({ tags: ["hiking"] }),
+            });
+          if (url.includes("/respond"))
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({ status: "DECLINED" }),
+            });
+          return Promise.resolve({
+            ok: false,
+            json: async () => ({ error: "not found" }),
+          });
+        },
+      );
+
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument(),
+      );
+
+      await userEvent.click(screen.getByRole("button", { name: /decline/i }));
+
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /^declined$/i }),
+        ).toBeInTheDocument(),
+      );
+
+      // No text attributing the decline to a specific partner should appear
+      expect(screen.queryByText(/sam declined/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/riley declined/i)).not.toBeInTheDocument();
+    });
   });
 
   it("shows error message when inbound API fails", async () => {
@@ -348,31 +475,14 @@ describe("InboundRequestsPage", () => {
     );
   });
 
-  it("privacy: declined entry shows no partner attribution", async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    mockApiFetch.mockImplementation(
-      (url: string) => {
-        if (url === "/connections/inbound")
-          return Promise.resolve({
-            ok: true,
-            json: async () => INBOUND_FIXTURE,
-          });
-        if (url === "/pairs/me")
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ tags: ["hiking"] }),
-          });
-        if (url.includes("/respond"))
-          return Promise.resolve({
-            ok: true,
-            json: async () => ({ status: "DECLINED" }),
-          });
-        return Promise.resolve({
-          ok: false,
-          json: async () => ({ error: "not found" }),
-        });
+  it("partner1 null fallback: renders without crash and shows '?' placeholder", async () => {
+    const fixtureNullPartner = [
+      {
+        ...INBOUND_FIXTURE[0],
+        partner1: null,
       },
-    );
+    ];
+    mockDefaultSuccess(fixtureNullPartner);
 
     render(
       <MemoryRouter>
@@ -381,21 +491,103 @@ describe("InboundRequestsPage", () => {
     );
 
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument(),
+      expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
 
-    await userEvent.click(screen.getByRole("button", { name: /decline/i }));
+    // toCouple() falls back to "?" for null partner1; names become "? & Riley"
+    expect(screen.getByText("? & Riley")).toBeInTheDocument();
+  });
 
-    await waitFor(() =>
+  describe("CoupleDetailModal integration", () => {
+    it("clicking a card opens the modal", async () => {
+      mockDefaultSuccess();
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.click(document.querySelector(".couple-card")!);
+
       expect(
-        screen.getByRole("button", { name: /^declined$/i }),
-      ).toBeInTheDocument(),
-    );
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+    });
 
-    // No text attributing the decline to a specific partner should appear
-    expect(screen.queryByText(/sam declined/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/riley declined/i)).not.toBeInTheDocument();
+    it("closing modal via × button removes the modal heading", async () => {
+      mockDefaultSuccess();
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
 
-    vi.useRealTimers();
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.click(document.querySelector(".couple-card")!);
+
+      // Modal should be open
+      expect(
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(document.querySelector(".discovery-modal-close")!);
+
+      expect(
+        screen.queryByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("closing modal via overlay removes the modal heading", async () => {
+      mockDefaultSuccess();
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.click(document.querySelector(".couple-card")!);
+
+      // Modal should be open
+      expect(
+        screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(document.querySelector(".discovery-modal-overlay")!);
+
+      expect(
+        screen.queryByRole("heading", { name: /sam & riley/i, level: 2 }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("hideCta: no 'I'm interested' button shown in modal", async () => {
+      mockDefaultSuccess();
+      render(
+        <MemoryRouter>
+          <InboundRequestsPage />
+        </MemoryRouter>,
+      );
+
+      await waitFor(() =>
+        expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
+      );
+
+      await userEvent.click(document.querySelector(".couple-card")!);
+
+      // Modal is open; hideCta prop should suppress the CTA
+      expect(
+        screen.queryByRole("button", { name: /i'm interested/i }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

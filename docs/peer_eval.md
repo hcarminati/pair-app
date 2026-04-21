@@ -15,3 +15,20 @@ Edward communicated blockers clearly and early. For example, flagging the JWT ex
 
 **Areas for Growth:**
 Feature issue ownership was tilted toward me in Sprint 2. Edward has the skills to own more feature work alongside E2E responsibilities, and I'd like to see that balance in future sprints.
+
+
+## Edward's Evaluation of Heather
+
+**Overall Contribution Rating:** ⭐⭐⭐⭐⭐ (5/5)
+
+**Technical Contributions:**
+Heather set up the CI/CD pipeline on day one of Sprint 1 (#7), which immediately paid dividends; the lint and format failures that surfaced mid-sprint (#12) were caught in CI rather than production. She owned the invite token generation and partner-linking flow (#5) end-to-end, including the edge case guard preventing self-redemption (#15), which was a non-obvious security requirement that she identified and addressed proactively. In Sprint 2, she drove the profile and tag selection features (#17, #18) and enforced tag normalization at the service layer rather than just the UI, which was a deliberate architectural decision that prevented a class of duplicate-data bugs.
+
+**Technical Leadership:**
+Heather made the call to define shared TypeScript types in `/shared` before writing any new Sprint 2 endpoints, an action item from the Sprint 1 retro that she followed through on, and it measurably reduced integration friction between client and server.
+
+**Collaboration and Communication:**
+Heather surfaces design decisions clearly and involves me before making data-model calls that affect my work. When the `pairs.location` vs. `profiles.location` question came up, she paused and confirmed rather than guessing.
+
+**Areas for Growth:**
+Sometimes takes on too many feature issues in a single sprint. Distributing ownership more evenly would reduce risk if any one item runs long.

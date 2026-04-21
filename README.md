@@ -130,17 +130,26 @@ You can run the development servers from the root directory:
 
 ## Testing
 
-- **Run All Tests:**
+### Unit / Integration Tests
+
+- **Run all tests (client + server):**
   ```bash
   npm run test
   ```
-- **Run Client Tests:**
+- **Run client or server tests only:**
   ```bash
   npm run test:client
-  ```
-- **Run Server Tests:**
-  ```bash
   npm run test:server
+  ```
+- **Interactive browser UI:**
+  ```bash
+  npm run test:ui:client
+  npm run test:ui:server
+  ```
+- **Coverage report (opens automatically):**
+  ```bash
+  npm run test:coverage:client
+  npm run test:coverage:server
   ```
 
 ### E2E Tests (Playwright)

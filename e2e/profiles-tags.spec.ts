@@ -77,9 +77,12 @@ test.describe.serial("Profiles and Tags", () => {
     // Guard: .profile-display-name renders {displayName} from React state (not the
     // native input value), so it only updates after React flushes the setState call.
     // Without this, handleSave() can run with a stale displayName closure.
-    await expect(page.locator(".profile-display-name")).toHaveText("Updated User A", {
-      timeout: 5_000,
-    });
+    await expect(page.locator(".profile-display-name")).toHaveText(
+      "Updated User A",
+      {
+        timeout: 5_000,
+      },
+    );
 
     await page.getByRole("button", { name: "Save profile" }).click();
     await expect(page.getByText("Profile saved successfully.")).toBeVisible();

@@ -34,10 +34,34 @@ test.describe.serial("Connection Stage 2 Flow", () => {
     test.setTimeout(240_000);
 
     // Register and link all four couples
-    await linkCouple(browser, EMAIL_J, "Stage2 User J", EMAIL_K, "Stage2 User K");
-    await linkCouple(browser, EMAIL_L, "Stage2 User L", EMAIL_M, "Stage2 User M");
-    await linkCouple(browser, EMAIL_N, "Stage2 User N", EMAIL_O, "Stage2 User O");
-    await linkCouple(browser, EMAIL_P, "Stage2 User P", EMAIL_Q, "Stage2 User Q");
+    await linkCouple(
+      browser,
+      EMAIL_J,
+      "Stage2 User J",
+      EMAIL_K,
+      "Stage2 User K",
+    );
+    await linkCouple(
+      browser,
+      EMAIL_L,
+      "Stage2 User L",
+      EMAIL_M,
+      "Stage2 User M",
+    );
+    await linkCouple(
+      browser,
+      EMAIL_N,
+      "Stage2 User N",
+      EMAIL_O,
+      "Stage2 User O",
+    );
+    await linkCouple(
+      browser,
+      EMAIL_P,
+      "Stage2 User P",
+      EMAIL_Q,
+      "Stage2 User Q",
+    );
 
     // Advance JK → LM to INTEREST_ALIGNED
     // J expresses interest in LM
@@ -72,9 +96,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
       ).toBeVisible({ timeout: 10_000 });
       await pageK.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageK).toHaveURL("/partner-interests", { timeout: 10_000 });
-      await expect(
-        pageK.getByRole("button", { name: "Approve" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageK.getByRole("button", { name: "Approve" })).toBeVisible({
+        timeout: 10_000,
+      });
       const alignRespK = pageK.waitForResponse(
         (resp) =>
           resp.url().includes("/connections/") && resp.url().includes("/align"),
@@ -119,9 +143,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
       ).toBeVisible({ timeout: 10_000 });
       await pageO.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageO).toHaveURL("/partner-interests", { timeout: 10_000 });
-      await expect(
-        pageO.getByRole("button", { name: "Approve" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageO.getByRole("button", { name: "Approve" })).toBeVisible({
+        timeout: 10_000,
+      });
       const alignRespO = pageO.waitForResponse(
         (resp) =>
           resp.url().includes("/connections/") && resp.url().includes("/align"),
@@ -176,9 +200,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
       await pageL.getByRole("link", { name: "Inbound Requests" }).click();
       await expect(pageL).toHaveURL("/inbound-requests", { timeout: 10_000 });
       expect((await inboundRespL).status()).toBe(200);
-      await expect(
-        pageL.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageL.getByRole("button", { name: "Accept" })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // L accepts
       const respondRespL = pageL.waitForResponse(
@@ -205,9 +229,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
       await pageM.getByRole("link", { name: "Inbound Requests" }).click();
       await expect(pageM).toHaveURL("/inbound-requests", { timeout: 10_000 });
       expect((await inboundRespM).status()).toBe(200);
-      await expect(
-        pageM.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageM.getByRole("button", { name: "Accept" })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // M accepts → both couple_2 partners accepted → CONNECTED
       const respondRespM = pageM.waitForResponse(
@@ -318,9 +342,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
           .locator(".couple-grid .couple-card")
           .filter({ hasText: "Stage2 User N" }),
       ).toBeVisible({ timeout: 10_000 });
-      await expect(
-        pageQ.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageQ.getByRole("button", { name: "Accept" })).toBeVisible({
+        timeout: 10_000,
+      });
 
       // P declines
       const respondRespP = pageP.waitForResponse(
@@ -331,9 +355,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
       );
       await pageP.getByRole("button", { name: "Decline" }).click();
       expect((await respondRespP).status()).toBe(200);
-      await expect(
-        pageP.getByRole("button", { name: "Declined" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageP.getByRole("button", { name: "Declined" })).toBeVisible(
+        { timeout: 10_000 },
+      );
       await expect(
         pageP.getByRole("button", { name: "Accept" }),
       ).not.toBeVisible();
@@ -353,7 +377,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
         timeout: 10_000,
       });
       await expect(
-        pageQ.getByText("Connection requests from other couples will appear here."),
+        pageQ.getByText(
+          "Connection requests from other couples will appear here.",
+        ),
       ).toBeVisible({ timeout: 10_000 });
 
       // N (Couple 1) sees no attribution of who declined:

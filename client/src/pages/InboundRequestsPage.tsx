@@ -204,7 +204,7 @@ export default function InboundRequestsPage() {
                   couple={couple}
                   showCta={false}
                   onClick={() => setSelectedId(couple.id)}
-                  onInterested={() => { }}
+                  onInterested={() => {}}
                 />
                 <div className="inbound-actions">
                   {connectedIds.has(couple.id) ? (
@@ -248,7 +248,7 @@ export default function InboundRequestsPage() {
           couple={selectedCouple}
           isInterested={false}
           onClose={() => setSelectedId(null)}
-          onInterested={() => { }}
+          onInterested={() => {}}
           hideCta
         />
       )}

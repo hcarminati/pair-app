@@ -192,9 +192,9 @@ describe("POST /connections/interest", () => {
 
     const insertArg = participantsMock?.value.insert.mock
       .calls[0]?.[0] as Array<{
-        user_id: string;
-        interested: boolean;
-      }>;
+      user_id: string;
+      interested: boolean;
+    }>;
     const initiator = insertArg?.find((p) => p.user_id === USER_ID);
     expect(initiator?.interested).toBe(true);
     const partner = insertArg?.find((p) => p.user_id === PARTNER_ID);

@@ -95,7 +95,9 @@ test.describe.serial("Connection Alignment Flow", () => {
         .filter({ hasText: "User C" });
       await expect(cardCD).toBeVisible({ timeout: 10_000 });
 
-      const interestedBtn = cardCD.getByRole("button", { name: "I'm interested" });
+      const interestedBtn = cardCD.getByRole("button", {
+        name: "I'm interested",
+      });
       const interestResp = pageA.waitForResponse(
         (resp) => resp.url().includes("/connections/interest"),
         { timeout: 10_000 },
@@ -110,12 +112,12 @@ test.describe.serial("Connection Alignment Flow", () => {
       await expect(
         pageB.locator(".couple-grid .couple-card").first(),
       ).toBeVisible({ timeout: 10_000 });
-      await expect(
-        pageB.getByRole("button", { name: "Approve" }),
-      ).toBeVisible({ timeout: 10_000 });
-      await expect(
-        pageB.getByRole("button", { name: "Decline" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageB.getByRole("button", { name: "Approve" })).toBeVisible({
+        timeout: 10_000,
+      });
+      await expect(pageB.getByRole("button", { name: "Decline" })).toBeVisible({
+        timeout: 10_000,
+      });
     } finally {
       await ctxA.close();
       await ctxB.close();
@@ -139,9 +141,9 @@ test.describe.serial("Connection Alignment Flow", () => {
       await pageB.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageB).toHaveURL("/partner-interests", { timeout: 10_000 });
 
-      await expect(
-        pageB.getByRole("button", { name: "Approve" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageB.getByRole("button", { name: "Approve" })).toBeVisible({
+        timeout: 10_000,
+      });
 
       const alignResp = pageB.waitForResponse(
         (resp) =>
@@ -175,9 +177,34 @@ test.describe.serial("Connection Alignment Flow", () => {
         pageC.locator(".couple-grid .couple-card").first(),
       ).toBeVisible({ timeout: 10_000 });
       // Accept/Decline buttons confirm the request is in REQUEST_PENDING state
-      await expect(
-        pageC.getByRole("button", { name: "Accept" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageC.getByRole("button", { name: "Accept" })).toBeVisible({
+        timeout: 10_000,
+      });
+
+      // Also verify User D (Couple 2's other partner) sees the same inbound request
+      const ctxD = await browser.newContext();
+      try {
+        const pageD = await ctxD.newPage();
+        await loginAs(pageD, EMAIL_D);
+        await expect(
+          pageD.getByRole("heading", { name: "Discover couples" }),
+        ).toBeVisible({ timeout: 10_000 });
+        const inboundRespD = pageD.waitForResponse(
+          (resp) => resp.url().includes("/connections/inbound"),
+          { timeout: 10_000 },
+        );
+        await pageD.getByRole("link", { name: "Inbound Requests" }).click();
+        await expect(pageD).toHaveURL("/inbound-requests", { timeout: 10_000 });
+        expect((await inboundRespD).status()).toBe(200);
+        await expect(
+          pageD.locator(".couple-grid .couple-card").first(),
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(pageD.getByRole("button", { name: "Accept" })).toBeVisible(
+          { timeout: 10_000 },
+        );
+      } finally {
+        await ctxD.close();
+      }
     } finally {
       await ctxB.close();
       await ctxC.close();
@@ -206,7 +233,9 @@ test.describe.serial("Connection Alignment Flow", () => {
         .filter({ hasText: "User H" });
       await expect(cardHI).toBeVisible({ timeout: 10_000 });
 
-      const interestedBtn = cardHI.getByRole("button", { name: "I'm interested" });
+      const interestedBtn = cardHI.getByRole("button", {
+        name: "I'm interested",
+      });
       const interestResp3 = pageF.waitForResponse(
         (resp) => resp.url().includes("/connections/interest"),
         { timeout: 10_000 },
@@ -219,9 +248,9 @@ test.describe.serial("Connection Alignment Flow", () => {
       await pageG.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageG).toHaveURL("/partner-interests", { timeout: 10_000 });
 
-      await expect(
-        pageG.getByRole("button", { name: "Decline" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageG.getByRole("button", { name: "Decline" })).toBeVisible({
+        timeout: 10_000,
+      });
 
       const vetoResp = pageG.waitForResponse(
         (resp) =>
@@ -232,9 +261,9 @@ test.describe.serial("Connection Alignment Flow", () => {
       expect((await vetoResp).status()).toBe(200);
 
       // After veto, action buttons are replaced with a disabled "Declined" badge
-      await expect(
-        pageG.getByRole("button", { name: "Declined" }),
-      ).toBeVisible({ timeout: 10_000 });
+      await expect(pageG.getByRole("button", { name: "Declined" })).toBeVisible(
+        { timeout: 10_000 },
+      );
       await expect(
         pageG.getByRole("button", { name: "Approve" }),
       ).not.toBeVisible();

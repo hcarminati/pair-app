@@ -26,8 +26,8 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      # - name: Format check
-      #   run: npm run format:check
+      - name: Format check
+        run: npm run format:check
 
       - name: Type check
         run: npx tsc --noEmit -p client/tsconfig.app.json && npx tsc --noEmit -p server/tsconfig.json

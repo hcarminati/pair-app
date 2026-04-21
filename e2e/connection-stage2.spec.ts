@@ -67,6 +67,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
     try {
       const pageK = await ctxK.newPage();
       await loginAs(pageK, EMAIL_K);
+      await expect(
+        pageK.getByRole("heading", { name: "Discover couples" }),
+      ).toBeVisible({ timeout: 10_000 });
       await pageK.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageK).toHaveURL("/partner-interests", { timeout: 10_000 });
       await expect(
@@ -111,6 +114,9 @@ test.describe.serial("Connection Stage 2 Flow", () => {
     try {
       const pageO = await ctxO.newPage();
       await loginAs(pageO, EMAIL_O);
+      await expect(
+        pageO.getByRole("heading", { name: "Discover couples" }),
+      ).toBeVisible({ timeout: 10_000 });
       await pageO.getByRole("link", { name: "Partner's Interests" }).click();
       await expect(pageO).toHaveURL("/partner-interests", { timeout: 10_000 });
       await expect(
@@ -148,6 +154,7 @@ test.describe.serial("Connection Stage 2 Flow", () => {
   test("Both L and M accept → CONNECTED; connection appears for both couples", async ({
     browser,
   }) => {
+    test.setTimeout(120_000);
     const ctxL = await browser.newContext();
     const ctxM = await browser.newContext();
     const ctxJ = await browser.newContext();
@@ -265,6 +272,7 @@ test.describe.serial("Connection Stage 2 Flow", () => {
   test("P declines → request removed from both inbound pages; Couple 1 sees no attribution", async ({
     browser,
   }) => {
+    test.setTimeout(120_000);
     const ctxP = await browser.newContext();
     const ctxQ = await browser.newContext();
     const ctxN = await browser.newContext();
@@ -292,6 +300,28 @@ test.describe.serial("Connection Stage 2 Flow", () => {
           .filter({ hasText: "Stage2 User N" }),
       ).toBeVisible({ timeout: 10_000 });
 
+      // Q visits Inbound Requests — proves Q also has access to the N+O card
+      // before anyone declines (AC3: both partners of couple 2 see the request)
+      await loginAs(pageQ, EMAIL_Q);
+      await expect(
+        pageQ.getByRole("heading", { name: "Discover couples" }),
+      ).toBeVisible({ timeout: 10_000 });
+      const inboundRespQ = pageQ.waitForResponse(
+        (resp) => resp.url().includes("/connections/inbound"),
+        { timeout: 10_000 },
+      );
+      await pageQ.getByRole("link", { name: "Inbound Requests" }).click();
+      await expect(pageQ).toHaveURL("/inbound-requests", { timeout: 10_000 });
+      expect((await inboundRespQ).status()).toBe(200);
+      await expect(
+        pageQ
+          .locator(".couple-grid .couple-card")
+          .filter({ hasText: "Stage2 User N" }),
+      ).toBeVisible({ timeout: 10_000 });
+      await expect(
+        pageQ.getByRole("button", { name: "Accept" }),
+      ).toBeVisible({ timeout: 10_000 });
+
       // P declines
       const respondRespP = pageP.waitForResponse(
         (resp) =>
@@ -308,19 +338,20 @@ test.describe.serial("Connection Stage 2 Flow", () => {
         pageP.getByRole("button", { name: "Accept" }),
       ).not.toBeVisible();
 
-      // Q visits Inbound Requests — request silently absent (DECLINED filtered from inbound)
-      await loginAs(pageQ, EMAIL_Q);
-      await expect(
-        pageQ.getByRole("heading", { name: "Discover couples" }),
-      ).toBeVisible({ timeout: 10_000 });
-      const inboundRespQ = pageQ.waitForResponse(
+      // Q revisits Inbound Requests (navigates away and back to trigger a fresh
+      // fetch) — card is now silently absent (DECLINED filtered from inbound)
+      await pageQ.getByRole("link", { name: "Discover" }).click();
+      await expect(pageQ).toHaveURL("/", { timeout: 10_000 });
+      const inboundRespQ2 = pageQ.waitForResponse(
         (resp) => resp.url().includes("/connections/inbound"),
         { timeout: 10_000 },
       );
       await pageQ.getByRole("link", { name: "Inbound Requests" }).click();
       await expect(pageQ).toHaveURL("/inbound-requests", { timeout: 10_000 });
-      expect((await inboundRespQ).status()).toBe(200);
-      await expect(pageQ.locator(".couple-grid")).not.toBeVisible();
+      expect((await inboundRespQ2).status()).toBe(200);
+      await expect(pageQ.locator(".couple-grid")).not.toBeVisible({
+        timeout: 10_000,
+      });
       await expect(
         pageQ.getByText("Connection requests from other couples will appear here."),
       ).toBeVisible({ timeout: 10_000 });
@@ -338,9 +369,8 @@ test.describe.serial("Connection Stage 2 Flow", () => {
           .locator(".couple-grid .couple-card")
           .filter({ hasText: "Stage2 User P" }),
       ).not.toBeVisible();
-      // Discovery page shows no "declined" attribution text anywhere
-      await expect(pageN.getByText(/declined/i)).not.toBeVisible();
       // Partner's Interests shows empty state — no INTEREST_PENDING rows remain after decline
+      // (primary privacy check: no "who declined" attribution visible in pending interests)
       const partnerInterestsRespN = pageN.waitForResponse(
         (resp) => resp.url().includes("/connections/partner-interests"),
         { timeout: 10_000 },

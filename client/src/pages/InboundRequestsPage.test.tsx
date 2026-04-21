@@ -83,7 +83,9 @@ describe("InboundRequestsPage", () => {
       expect(screen.queryByText(/loading/i)).not.toBeInTheDocument(),
     );
     expect(
-      screen.getByText(/connection requests from other couples will appear here/i),
+      screen.getByText(
+        /connection requests from other couples will appear here/i,
+      ),
     ).toBeInTheDocument();
   });
 
@@ -109,9 +111,13 @@ describe("InboundRequestsPage", () => {
       </MemoryRouter>,
     );
     await waitFor(() =>
-      expect(screen.getByRole("button", { name: /accept/i })).toBeInTheDocument(),
+      expect(
+        screen.getByRole("button", { name: /accept/i }),
+      ).toBeInTheDocument(),
     );
-    expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /decline/i }),
+    ).toBeInTheDocument();
   });
 
   describe("polling tests (fake timers)", () => {
@@ -136,29 +142,27 @@ describe("InboundRequestsPage", () => {
     });
 
     it("clicking Accept calls respond endpoint with accept:true", async () => {
-      mockApiFetch.mockImplementation(
-        (url: string) => {
-          if (url === "/connections/inbound")
-            return Promise.resolve({
-              ok: true,
-              json: async () => INBOUND_FIXTURE,
-            });
-          if (url === "/pairs/me")
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ tags: ["hiking"] }),
-            });
-          if (url.includes("/respond"))
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ status: "ACCEPTED" }),
-            });
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
           return Promise.resolve({
-            ok: false,
-            json: async () => ({ error: "not found" }),
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
           });
-        },
-      );
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "ACCEPTED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
 
       render(
         <MemoryRouter>
@@ -167,7 +171,9 @@ describe("InboundRequestsPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /accept/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /accept/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /accept/i }));
@@ -184,29 +190,27 @@ describe("InboundRequestsPage", () => {
     });
 
     it("clicking Decline calls respond endpoint with accept:false", async () => {
-      mockApiFetch.mockImplementation(
-        (url: string) => {
-          if (url === "/connections/inbound")
-            return Promise.resolve({
-              ok: true,
-              json: async () => INBOUND_FIXTURE,
-            });
-          if (url === "/pairs/me")
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ tags: ["hiking"] }),
-            });
-          if (url.includes("/respond"))
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ status: "DECLINED" }),
-            });
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
           return Promise.resolve({
-            ok: false,
-            json: async () => ({ error: "not found" }),
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
           });
-        },
-      );
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
 
       render(
         <MemoryRouter>
@@ -215,7 +219,9 @@ describe("InboundRequestsPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /decline/i }));
@@ -232,29 +238,27 @@ describe("InboundRequestsPage", () => {
     });
 
     it("shows 'Connected!' after respond returns CONNECTED", async () => {
-      mockApiFetch.mockImplementation(
-        (url: string) => {
-          if (url === "/connections/inbound")
-            return Promise.resolve({
-              ok: true,
-              json: async () => INBOUND_FIXTURE,
-            });
-          if (url === "/pairs/me")
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ tags: ["hiking"] }),
-            });
-          if (url.includes("/respond"))
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ status: "CONNECTED" }),
-            });
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
           return Promise.resolve({
-            ok: false,
-            json: async () => ({ error: "not found" }),
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
           });
-        },
-      );
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "CONNECTED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
 
       render(
         <MemoryRouter>
@@ -263,7 +267,9 @@ describe("InboundRequestsPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /accept/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /accept/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /accept/i }));
@@ -276,30 +282,28 @@ describe("InboundRequestsPage", () => {
     });
 
     it("shows 'Declined' after clicking Decline", async () => {
-      mockApiFetch.mockImplementation(
-        (url: string) => {
-          if (url === "/connections/inbound")
-            return Promise.resolve({
-              ok: true,
-              json: async () => INBOUND_FIXTURE,
-            });
-          if (url === "/pairs/me")
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ tags: ["hiking"] }),
-            });
-          if (url.includes("/respond"))
-            return Promise.resolve({
-              ok: true,
-              // Return a non-CONNECTED status so the client sets responses to false
-              json: async () => ({ status: "DECLINED" }),
-            });
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
           return Promise.resolve({
-            ok: false,
-            json: async () => ({ error: "not found" }),
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
           });
-        },
-      );
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            // Return a non-CONNECTED status so the client sets responses to false
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
 
       render(
         <MemoryRouter>
@@ -308,7 +312,9 @@ describe("InboundRequestsPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /decline/i }));
@@ -387,7 +393,8 @@ describe("InboundRequestsPage", () => {
 
       // The respond endpoint should never have been called
       const respondCalls = mockApiFetch.mock.calls.filter(
-        ([url]: [string]) => typeof url === "string" && url.includes("/respond"),
+        (args: unknown[]) =>
+          typeof args[0] === "string" && args[0].includes("/respond"),
       );
       expect(respondCalls).toHaveLength(0);
     });
@@ -396,29 +403,27 @@ describe("InboundRequestsPage", () => {
     // partner name attribution. FR-CONN-08 (couple 1 cannot see which partner on
     // couple 2 declined) is covered by the backend.
     it("privacy: declined entry shows no partner attribution", async () => {
-      mockApiFetch.mockImplementation(
-        (url: string) => {
-          if (url === "/connections/inbound")
-            return Promise.resolve({
-              ok: true,
-              json: async () => INBOUND_FIXTURE,
-            });
-          if (url === "/pairs/me")
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ tags: ["hiking"] }),
-            });
-          if (url.includes("/respond"))
-            return Promise.resolve({
-              ok: true,
-              json: async () => ({ status: "DECLINED" }),
-            });
+      mockApiFetch.mockImplementation((url: string) => {
+        if (url === "/connections/inbound")
           return Promise.resolve({
-            ok: false,
-            json: async () => ({ error: "not found" }),
+            ok: true,
+            json: async () => INBOUND_FIXTURE,
           });
-        },
-      );
+        if (url === "/pairs/me")
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ tags: ["hiking"] }),
+          });
+        if (url.includes("/respond"))
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ status: "DECLINED" }),
+          });
+        return Promise.resolve({
+          ok: false,
+          json: async () => ({ error: "not found" }),
+        });
+      });
 
       render(
         <MemoryRouter>
@@ -427,7 +432,9 @@ describe("InboundRequestsPage", () => {
       );
 
       await waitFor(() =>
-        expect(screen.getByRole("button", { name: /decline/i })).toBeInTheDocument(),
+        expect(
+          screen.getByRole("button", { name: /decline/i }),
+        ).toBeInTheDocument(),
       );
 
       await userEvent.click(screen.getByRole("button", { name: /decline/i }));
@@ -479,10 +486,10 @@ describe("InboundRequestsPage", () => {
     const fixtureNullPartner = [
       {
         ...INBOUND_FIXTURE[0],
-        partner1: null,
+        partner1: null as (typeof INBOUND_FIXTURE)[0]["partner1"] | null,
       },
     ];
-    mockDefaultSuccess(fixtureNullPartner);
+    mockDefaultSuccess(fixtureNullPartner as typeof INBOUND_FIXTURE);
 
     render(
       <MemoryRouter>
@@ -563,7 +570,9 @@ describe("InboundRequestsPage", () => {
         screen.getByRole("heading", { name: /sam & riley/i, level: 2 }),
       ).toBeInTheDocument();
 
-      await userEvent.click(document.querySelector(".discovery-modal-overlay")!);
+      await userEvent.click(
+        document.querySelector(".discovery-modal-overlay")!,
+      );
 
       expect(
         screen.queryByRole("heading", { name: /sam & riley/i, level: 2 }),
